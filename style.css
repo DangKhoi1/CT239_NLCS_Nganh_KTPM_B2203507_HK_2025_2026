@@ -1,0 +1,105 @@
+/* ======= Tiêu đề chính ======= */
+QLabel#heading {
+  color: #1a237e;
+  font-weight: 700;
+  font-size: 26px;
+  padding: 20px 10px;
+  margin: 0;
+  border-bottom: 1px solid #ddd;
+  letter-spacing: 1px;
+  font-family: "Segoe UI", sans-serif;
+}
+
+/* ======= Nhãn lựa chọn ======= */
+QLabel#label_algo,
+QLabel#label_draw,
+QLabel#options_panel {
+  color: #444;
+  font-weight: 600;
+  font-size: 15px;
+  margin-top: 12px;
+  margin-bottom: 6px;
+  font-family: "Segoe UI", sans-serif;
+}
+
+/* ======= ComboBox ======= */
+QComboBox {
+  font-size: 14px;
+  font-family: "Segoe UI", Tahoma;
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background-color: #fafafa;
+  font-weight: 500;
+  /* transition: border 0.2s ease; */
+}
+
+QComboBox:hover {
+  border: 1px solid #607d8b;
+}
+
+QComboBox:focus {
+  border: 1.5px solid #3f51b5;
+}
+
+/* ======= Nút hành động ======= */
+QPushButton {
+  padding: 8px 12px;
+  font-size: 14px;
+  font-family: "Segoe UI", sans-serif;
+  font-weight: 600;
+  border-radius: 6px;
+  border: none;
+  min-height: 36px;
+  background-color: #eeeeee;
+  color: #333;
+  /* transition: all 0.2s ease; */
+}
+
+QPushButton:hover {
+  background-color: #e0e0e0;
+}
+
+/* === Nút chuyên biệt === */
+QPushButton#btn_execute {
+  background-color: #388e3c;
+  color: white;
+}
+QPushButton#btn_execute:hover {
+  background-color: #2e7d32;
+}
+
+QPushButton#btn_components {
+  background-color: #fbc02d;
+  color: black;
+}
+QPushButton#btn_components:hover {
+  background-color: #fdd835;
+}
+
+QPushButton#btn_random {
+  background-color: #1976d2;
+  color: white;
+}
+QPushButton#btn_random:hover {
+  background-color: #1565c0;
+}
+
+QPushButton#btn_clear {
+  background-color: #d32f2f;
+  color: white;
+}
+QPushButton#btn_clear:hover {
+  background-color: #c62828;
+}
+
+/* ======= Kết quả và hướng dẫn ======= */
+QTextEdit {
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background-color: #fcfcfc;
+  font-size: 13px;
+  padding: 6px 10px;
+  font-family: "Consolas", monospace;
+  color: #212121;
+}
