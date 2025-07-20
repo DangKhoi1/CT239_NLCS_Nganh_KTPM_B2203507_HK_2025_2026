@@ -33,32 +33,32 @@ class Graph:
         self.edges.clear()
     
 
-def dfs_hamiltonian_cycle(self):
-    vertices = [v[0] for v in self.vertices]
-    adjacency = {v: set() for v in vertices}
-    for u, v in self.edges:
-        adjacency[u].add(v)
-        adjacency[v].add(u)
+# def dfs_hamiltonian_cycle(self):
+#     vertices = [v[0] for v in self.vertices]
+#     adjacency = {v: set() for v in vertices}
+#     for u, v in self.edges:
+#         adjacency[u].add(v)
+#         adjacency[v].add(u)
 
-    path = []
+#     path = []
 
-    def dfs(v):
-        if len(path) == len(vertices):
-            return path[0] in adjacency[path[-1]]  # có cạnh về lại đỉnh đầu không
-        for neighbor in adjacency[v]:
-            if neighbor not in path:
-                path.append(neighbor)
-                if dfs(neighbor):
-                    return True
-                path.pop()
-        return False
+#     def dfs(v):
+#         if len(path) == len(vertices):
+#             return path[0] in adjacency[path[-1]]  # có cạnh về lại đỉnh đầu không
+#         for neighbor in adjacency[v]:
+#             if neighbor not in path:
+#                 path.append(neighbor)
+#                 if dfs(neighbor):
+#                     return True
+#                 path.pop()
+#         return False
 
-    for start in vertices:
-        path.clear()
-        path.append(start)
-        if dfs(start):
-            return path + [path[0]]
-    return None
+#     for start in vertices:
+#         path.clear()
+#         path.append(start)
+#         if dfs(start):
+#             return path + [path[0]]
+#     return None
 
 
 
@@ -108,31 +108,31 @@ def hamiltonian_cycle(graph):
         return path + [path[0]]
     return None
 
-def bfs_hamiltonian_cycle(self):
-    vertices = [v[0] for v in self.vertices]
-    n = len(vertices)
-    adjacency = {v: set() for v in vertices}
-    for u, v in self.edges:
-        adjacency[u].add(v)
-        adjacency[v].add(u)
+# def bfs_hamiltonian_cycle(self):
+#     vertices = [v[0] for v in self.vertices]
+#     n = len(vertices)
+#     adjacency = {v: set() for v in vertices}
+#     for u, v in self.edges:
+#         adjacency[u].add(v)
+#         adjacency[v].add(u)
 
-    for start in vertices:
-        queue = deque()
-        queue.append((start, [start]))
+#     for start in vertices:
+#         queue = deque()
+#         queue.append((start, [start]))
 
-        while queue:
-            current, path = queue.popleft()
+#         while queue:
+#             current, path = queue.popleft()
 
-            if len(path) == n:
-                if path[0] in adjacency[current]:
-                    return path + [path[0]]  # chu trình khép kín
-                continue
+#             if len(path) == n:
+#                 if path[0] in adjacency[current]:
+#                     return path + [path[0]]  # chu trình khép kín
+#                 continue
 
-            for neighbor in adjacency[current]:
-                if neighbor not in path:
-                    queue.append((neighbor, path + [neighbor]))
+#             for neighbor in adjacency[current]:
+#                 if neighbor not in path:
+#                     queue.append((neighbor, path + [neighbor]))
 
-    return None
+#     return None
 
 def export_file(graph, file_path):
     if not file_path:
@@ -170,3 +170,26 @@ def import_file(graph, file_path):
     for edge in data.get("edges", []):
         if len(edge) == 2:
             graph.add_edge(tuple(edge))
+
+def connected_components(graph):
+    vertices = [v[0] for v in graph.vertices]
+    adjacency = {v: set() for v in vertices}
+    for u, v in graph.edges:
+        adjacency[u].add(v)
+        adjacency[v].add(u)
+
+    visited = set()
+    count = 0
+
+    def dfs(u):
+        visited.add(u)
+        for v in adjacency[u]:
+            if v not in visited:
+                dfs(v)
+
+    for v in vertices:
+        if v not in visited:
+            dfs(v)
+            count += 1
+
+    return count

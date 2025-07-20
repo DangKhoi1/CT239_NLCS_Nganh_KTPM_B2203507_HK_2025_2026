@@ -5,13 +5,14 @@ from PyQt5.QtCore import Qt
 from graph_area import GraphArea
 from graph import Graph
 from graph import hamiltonian_cycle
-from graph import dfs_hamiltonian_cycle
-from graph import bfs_hamiltonian_cycle
+# from graph import dfs_hamiltonian_cycle
+# from graph import bfs_hamiltonian_cycle
 from graph import generate_random_graph
 import pathlib
 from PyQt5.QtGui import QIcon
 from graph import export_file
 from graph import import_file
+from graph import connected_components
 
 
 class GraphGUI(QWidget):
@@ -70,9 +71,9 @@ class GraphGUI(QWidget):
 
         label_algo = QLabel("Chọn giải thuật")
         label_algo.setObjectName("label_algo")
-        control_panel.addWidget(label_algo)
+        control_panel.addWidget(label_algo) 
         self.algorithm_combo = QComboBox()
-        self.algorithm_combo.addItems(["Quay lui", "Thuật toán DFS", "Thuật toán BFS"])
+        self.algorithm_combo.addItems(["Quay lui"])
         self.algorithm_combo.setStyleSheet("padding-left: 15px;")
         self.algorithm_combo.setObjectName("algorithm_combo")
         control_panel.addWidget(self.algorithm_combo)
@@ -117,6 +118,8 @@ class GraphGUI(QWidget):
         self.btn_execute.clicked.connect(self.run_algorithm)
         self.draw_combo.currentTextChanged.connect(self.on_draw_mode_changed)
         self.options_combo.currentTextChanged.connect(self.handle_option_change)
+        self.btn_components.clicked.connect(self.run_connected_components)
+
 
         
 
@@ -150,18 +153,18 @@ class GraphGUI(QWidget):
                 self.result_output.setPlainText("Chu trình Hamilton tìm được:\n" + " → ".join(result))
             else:
                 self.result_output.setPlainText("Không tìm thấy chu trình Hamilton.")
-        elif algo == "Thuật toán DFS":       
-            result = dfs_hamiltonian_cycle(self.graph)
-            if result:
-                self.result_output.setPlainText("Chu trình Hamilton tìm được:\n" + " → ".join(result))
-            else:
-                self.result_output.setPlainText("Không tìm thấy chu trình Hamilton.")
-        elif algo == "Thuật toán BFS":
-            result = bfs_hamiltonian_cycle(self.graph)
-            if result:
-                self.result_output.setPlainText("Chu trình Hamilton tìm được:\n" + " → ".join(result))
-            else:
-                self.result_output.setPlainText("Không tìm thấy chu trình Hamilton.")
+        # elif algo == "Thuật toán DFS":       
+        #     result = dfs_hamiltonian_cycle(self.graph)
+        #     if result:
+        #         self.result_output.setPlainText("Chu trình Hamilton tìm được:\n" + " → ".join(result))
+        #     else:
+        #         self.result_output.setPlainText("Không tìm thấy chu trình Hamilton.")
+        # elif algo == "Thuật toán BFS":
+        #     result = bfs_hamiltonian_cycle(self.graph)
+        #     if result:
+        #         self.result_output.setPlainText("Chu trình Hamilton tìm được:\n" + " → ".join(result))
+        #     else:
+        #         self.result_output.setPlainText("Không tìm thấy chu trình Hamilton.")
 
     def run_exportfile(self):
         option = self.options_combo.currentText()
@@ -202,6 +205,12 @@ class GraphGUI(QWidget):
             self.run_export_image()
             self.options_combo.setCurrentIndex(0)
 
+    def run_connected_components(self):
+        if not self.graph.vertices:
+            self.result_output.setPlainText("Không có đồ thị để kiểm tra.")
+            return
+        num_components = connected_components(self.graph)
+        self.result_output.setPlainText(f"Số miền liên thông: {num_components}")
 
 
 
