@@ -1,7 +1,7 @@
-from math import atan2, sin, cos, pi, hypot
-from PyQt5.QtWidgets import QWidget, QInputDialog, QApplication
+from math import hypot
+from PyQt5.QtWidgets import QWidget, QInputDialog
 from PyQt5.QtCore import Qt, QRect, QPointF
-from PyQt5.QtGui import QPainter, QBrush, QColor, QPen
+from PyQt5.QtGui import QPainter, QBrush, QColor, QPen, QPainterPath
 
 
 class GraphArea(QWidget):
@@ -10,7 +10,6 @@ class GraphArea(QWidget):
         self.graph = graph
         self.get_mode = mode_getter
         self.setFocusPolicy(Qt.StrongFocus)
-
         self.selected_vertex_idx = None
         self.selected_vertices = []
 
@@ -26,7 +25,6 @@ class GraphArea(QWidget):
 
         pos = event.pos()
         mode = self.get_mode()
-
 
         for i, (name, vpos) in enumerate(self.graph.vertices):
             if (pos - vpos).manhattanLength() <= 20:
@@ -44,8 +42,7 @@ class GraphArea(QWidget):
             for name, vpos in self.graph.vertices:
                 if (pos - vpos).manhattanLength() <= 20:
                     if event.modifiers() & Qt.ShiftModifier:
-                        if name not in self.selected_vertices:
-                            self.selected_vertices.append(name)
+                        self.selected_vertices.append(name)
                         if len(self.selected_vertices) == 2:
                             self.graph.add_edge(tuple(self.selected_vertices))
                             self.selected_vertices.clear()
@@ -63,11 +60,24 @@ class GraphArea(QWidget):
             for name1, name2 in self.graph.edges:
                 pos1 = next((v for n, v in self.graph.vertices if n == name1), None)
                 pos2 = next((v for n, v in self.graph.vertices if n == name2), None)
-                if pos1 and pos2 and self.is_point_near_line(pos, pos1, pos2, 10):
-                    self.graph.remove_edge((name1, name2))
-                    self.selected_vertices.clear()
-                    self.update()
-                    return
+                
+                if not pos1 or not pos2:
+                    continue
+
+                if name1 == name2:
+                    control_point = QPointF(pos1.x(), pos1.y() - 40)
+                    if self.is_point_near_line(pos, pos1, control_point, 15):
+                        self.graph.remove_edge((name1, name2))
+                        self.selected_vertices.clear()
+                        self.update()
+                        return
+                else:
+                    if self.is_point_near_line(pos, pos1, pos2, 10):
+                        self.graph.remove_edge((name1, name2))
+                        self.selected_vertices.clear()
+                        self.update()
+                        return
+
 
     def mouseMoveEvent(self, event):
         if self.selected_vertex_idx is not None:
@@ -78,7 +88,6 @@ class GraphArea(QWidget):
             else:
                 self.selected_vertex_idx = None
 
-
     def mouseReleaseEvent(self, event):
         self.selected_vertex_idx = None
 
@@ -86,10 +95,8 @@ class GraphArea(QWidget):
         ab = b - a
         ap = p - a
         ab_len_sq = ab.x() ** 2 + ab.y() ** 2
-
         if ab_len_sq == 0:
             return (p - a).manhattanLength() <= tolerance
-
         t = max(0, min(1, (ap.x() * ab.x() + ap.y() * ab.y()) / ab_len_sq))
         projection = a + ab * t
         dx = projection.x() - p.x()
@@ -111,7 +118,25 @@ class GraphArea(QWidget):
         for start, end in self.graph.edges:
             pos1 = next((pos for name, pos in self.graph.vertices if name == start), None)
             pos2 = next((pos for name, pos in self.graph.vertices if name == end), None)
-            if pos1 and pos2:
+
+            if pos1 is None or pos2 is None:
+                continue
+
+            painter.setPen(QPen(Qt.black, 3))
+
+            if start == end:
+                # Vẽ self-loop dạng cong móc tại đỉnh
+                path = QPainterPath()
+                path.moveTo(pos1)
+
+                dx, dy = 60, -60  # Điều chỉnh độ cong
+                ctrl1 = QPointF(pos1.x() + dx, pos1.y() + dy)
+                ctrl2 = QPointF(pos1.x() - dx, pos1.y() + dy)
+                path.cubicTo(ctrl1, ctrl2, pos1)
+
+                painter.drawPath(path)
+            else:
+                # Vẽ cạnh thường
                 painter.drawLine(pos1, pos2)
 
         # Làm nổi bật đỉnh đang chọn nếu đang thêm cạnh
@@ -136,6 +161,3 @@ class GraphArea(QWidget):
             font.setBold(True)
             painter.setFont(font)
             painter.drawText(rect, Qt.AlignCenter, name)
-
-   
-

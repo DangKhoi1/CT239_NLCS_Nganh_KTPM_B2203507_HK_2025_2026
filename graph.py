@@ -4,6 +4,7 @@ import random
 from PyQt5.QtCore import QPoint
 import json
 
+
 class Graph:
     def __init__(self):
         self.vertices = []
@@ -16,7 +17,7 @@ class Graph:
 
     def add_edge(self, edge):
         name1, name2 = edge
-        if {name1, name2} not in [{e[0], e[1]} for e in self.edges]:
+        if edge not in self.edges:
             self.edges.append(edge)
 
     def remove_vertex(self, vertex):
@@ -31,6 +32,7 @@ class Graph:
     def clear(self):
         self.vertices.clear()
         self.edges.clear()
+
     
 
 # def dfs_hamiltonian_cycle(self):

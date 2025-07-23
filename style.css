@@ -1,105 +1,124 @@
-/* ======= Tiêu đề chính ======= */
-QLabel#heading {
-  color: #1a237e;
-  font-weight: 700;
-  font-size: 26px;
-  padding: 20px 10px;
-  margin: 0;
-  border-bottom: 1px solid #ddd;
-  letter-spacing: 1px;
-  font-family: "Segoe UI", sans-serif;
+/* ===== FONT VÀ GIAO DIỆN CHUNG ===== */
+* {
+  font-family: "Segoe UI", "Roboto", sans-serif;
+  font-size: 14px;
+  color: #333;
 }
 
-/* ======= Nhãn lựa chọn ======= */
+/* ===== TIÊU ĐỀ CHÍNH ===== */
+QLabel#heading {
+  font-size: 24px;
+  font-weight: bold;
+  padding: 16px;
+  margin: 12px 0;
+  text-align: center;
+  background-color: #1976d2;
+  color: white;
+  border-radius: 10px;
+  letter-spacing: 1px;
+}
+
+/* ===== PANEL ĐIỀU KHIỂN ===== */
+#control_panel {
+  background-color: #fafafa;
+  padding: 20px 15px;
+  border-radius: 12px;
+  border: 1px solid #ddd;
+  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+/* ===== CÁC NHÃN BÊN PANEL ===== */
 QLabel#label_algo,
 QLabel#label_draw,
 QLabel#options_panel {
-  color: #444;
   font-weight: 600;
+  margin-top: 10px;
   font-size: 15px;
-  margin-top: 12px;
-  margin-bottom: 6px;
-  font-family: "Segoe UI", sans-serif;
 }
 
-/* ======= ComboBox ======= */
+/* ===== COMBOBOX ===== */
 QComboBox {
-  font-size: 14px;
-  font-family: "Segoe UI", Tahoma;
-  padding: 6px 12px;
-  border: 1px solid #ccc;
+  padding: 8px 10px;
   border-radius: 6px;
-  background-color: #fafafa;
+  border: 1px solid #bbb;
+  background-color: white;
   font-weight: 500;
-  /* transition: border 0.2s ease; */
 }
-
 QComboBox:hover {
-  border: 1px solid #607d8b;
+  border-color: #64b5f6;
 }
-
 QComboBox:focus {
-  border: 1.5px solid #3f51b5;
+  border: 2px solid #2196f3;
 }
 
-/* ======= Nút hành động ======= */
+/* ===== NÚT CHUNG ===== */
 QPushButton {
-  padding: 8px 12px;
-  font-size: 14px;
-  font-family: "Segoe UI", sans-serif;
-  font-weight: 600;
+  padding: 8px 14px;
   border-radius: 6px;
+  font-weight: 600;
   border: none;
-  min-height: 36px;
-  background-color: #eeeeee;
-  color: #333;
-  /* transition: all 0.2s ease; */
-}
-
-QPushButton:hover {
   background-color: #e0e0e0;
+  min-height: 36px;
+  color: #212121;
+}
+QPushButton:hover {
+  background-color: #d5d5d5;
 }
 
-/* === Nút chuyên biệt === */
+/* === NÚT ĐẶC BIỆT === */
 QPushButton#btn_execute {
-  background-color: #388e3c;
+  background-color: #3ec943;
   color: white;
 }
 QPushButton#btn_execute:hover {
-  background-color: #2e7d32;
+  background-color: #3cb340;
 }
 
 QPushButton#btn_components {
-  background-color: #fbc02d;
-  color: black;
+  background-color: #fdd835;
+  color: white;
 }
 QPushButton#btn_components:hover {
-  background-color: #fdd835;
+  background-color: #fbc02d;
 }
 
 QPushButton#btn_random {
-  background-color: #1976d2;
+  background-color: #42a5f5;
   color: white;
 }
 QPushButton#btn_random:hover {
-  background-color: #1565c0;
+  background-color: #1e88e5;
 }
 
 QPushButton#btn_clear {
-  background-color: #d32f2f;
+  background-color: #e53935;
   color: white;
 }
 QPushButton#btn_clear:hover {
   background-color: #c62828;
 }
 
-/* ======= Kết quả và hướng dẫn ======= */
+GraphArea#graph_area {
+  border-radius: 10px;
+}
+
+/* ===== VÙNG HIỂN THỊ KẾT QUẢ ===== */
 QTextEdit {
+  background-color: #ffffff;
   border: 1px solid #ccc;
-  border-radius: 6px;
-  background-color: #fcfcfc;
-  font-size: 13px;
-  padding: 6px 10px;
+  border-radius: 8px;
+  padding: 10px;
   font-family: "Consolas", monospace;
-  color: #212121;
+  font-size: 13px;
+  color: #263238;
+  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.03);
+}
+
+/* ===== LABEL CHO VÙNG TEXT (KẾT QUẢ - LIÊN THÔNG - THÔNG TIN) ===== */
+QLabel {
+  font-weight: bold;
+  font-size: 14px;
+  margin-top: 8px;
+  margin-bottom: 4px;
+  color: #37474f;
 }

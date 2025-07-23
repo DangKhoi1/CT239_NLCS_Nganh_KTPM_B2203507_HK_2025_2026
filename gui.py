@@ -48,19 +48,43 @@ class GraphGUI(QWidget):
         center_layout.addWidget(self.graph_area, stretch=6)
 
 
+        # Layout dưới vùng vẽ
         bottom_layout = QHBoxLayout()
         center_layout.addLayout(bottom_layout, stretch=2)
 
+        left_output_layout = QVBoxLayout()
+        bottom_layout.addLayout(left_output_layout, stretch=1)
+
+        label_result = QLabel("Kết quả xử lý đồ thị:")
+        label_result.setStyleSheet("font-weight: bold;")
+        left_output_layout.addWidget(label_result)
 
         self.result_output = QTextEdit()
         self.result_output.setReadOnly(True)
         self.result_output.setStyleSheet("background-color: white; border: 1px solid #ccc;")
-        bottom_layout.addWidget(self.result_output, stretch=1)
+        left_output_layout.addWidget(self.result_output)
 
-        self.instructions = QTextEdit()
-        self.instructions.setReadOnly(True)
-        self.instructions.setStyleSheet("background-color: white; border: 1px solid #ccc;")
-        bottom_layout.addWidget(self.instructions, stretch=1)
+        label_components = QLabel("Bộ phận liên thông:")
+        label_components.setStyleSheet("font-weight: bold; margin-top: 5px;")
+        left_output_layout.addWidget(label_components)
+
+        self.components = QTextEdit()
+        self.components.setReadOnly(True)
+        self.components.setStyleSheet("background-color: white; border: 1px solid #ccc;")
+        left_output_layout.addWidget(self.components)
+
+
+        right_info_layout = QVBoxLayout()
+        bottom_layout.addLayout(right_info_layout, stretch=1)
+
+        label_info = QLabel("Thông tin đồ thị:")
+        label_info.setStyleSheet("font-weight: bold;")
+        right_info_layout.addWidget(label_info)
+
+        self.info_box = QTextEdit()
+        self.info_box.setReadOnly(True)
+        self.info_box.setStyleSheet("background-color: white; border: 1px solid #ccc;")
+        right_info_layout.addWidget(self.info_box)
 
 
 
@@ -207,10 +231,10 @@ class GraphGUI(QWidget):
 
     def run_connected_components(self):
         if not self.graph.vertices:
-            self.result_output.setPlainText("Không có đồ thị để kiểm tra.")
+            self.components.setPlainText("Không có đồ thị để kiểm tra.")
             return
         num_components = connected_components(self.graph)
-        self.result_output.setPlainText(f"Số miền liên thông: {num_components}")
+        self.components.setPlainText(f"Số miền liên thông: {num_components}")
 
 
 
