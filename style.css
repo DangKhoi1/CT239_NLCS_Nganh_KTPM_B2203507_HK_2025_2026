@@ -24,7 +24,6 @@ QLabel#heading {
   padding: 20px 15px;
   border-radius: 12px;
   border: 1px solid #ddd;
-  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.05);
 }
 
 /* ===== CÁC NHÃN BÊN PANEL ===== */
@@ -111,7 +110,6 @@ QTextEdit {
   font-family: "Consolas", monospace;
   font-size: 13px;
   color: #263238;
-  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.03);
 }
 
 /* ===== LABEL CHO VÙNG TEXT (KẾT QUẢ - LIÊN THÔNG - THÔNG TIN) ===== */

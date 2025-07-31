@@ -136,7 +136,7 @@ class GraphGUI(QWidget):
         control_panel.addWidget(self.options_combo)
         control_panel.addStretch()
 
-        # Kết nối sự kiện
+         # Kết nối sự kiện
         self.btn_random.clicked.connect(self.generate_random_graph)
         self.btn_clear.clicked.connect(self.clear_graph)
         self.btn_execute.clicked.connect(self.run_algorithm)
@@ -144,8 +144,6 @@ class GraphGUI(QWidget):
         self.options_combo.currentTextChanged.connect(self.handle_option_change)
         self.btn_components.clicked.connect(self.run_connected_components)
 
-
-        
 
     def generate_random_graph(self):
         generate_random_graph(self.graph, num_vertices=6)
