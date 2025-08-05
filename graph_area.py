@@ -1,9 +1,8 @@
 from math import hypot
 from copy import deepcopy
-from PyQt5.QtWidgets import QWidget, QInputDialog
+from PyQt5.QtWidgets import QWidget, QInputDialog, QPushButton
 from PyQt5.QtCore import Qt, QRect, QPointF
 from PyQt5.QtGui import QPainter, QBrush, QColor, QPen, QPainterPath
-
 
 class GraphArea(QWidget):
     def __init__(self, graph, mode_getter, parent=None):
@@ -18,9 +17,109 @@ class GraphArea(QWidget):
         self.selection_end = QPointF()
         self.area_selected_vertices = []
         self.area_selected_edges = []
-        self.last_mouse_pos = None  
-        self.undo_stack = []  
-        self.redo_stack = []  
+        self.last_mouse_pos = None
+        self.undo_stack = []
+        self.redo_stack = []
+        self.selected_control_point = None
+        self.dragging_control_point = False
+        self.control_point_radius = 6
+        self.hamilton_path = None
+        self.dragging_area_selection = False
+        self.current_step_index = -1
+        self.hamilton_steps = []
+        
+        
+
+        self.btn_next_step = QPushButton("Bước tiếp", self)
+        self.btn_next_step.adjustSize()
+        self.btn_next_step.setVisible(False)
+        self.btn_prev_step = QPushButton("Quay lại", self)
+        self.btn_prev_step.adjustSize()
+        self.btn_prev_step.setVisible(False)
+        self.btn_exit_step_mode = QPushButton("Thoát", self)
+        self.btn_exit_step_mode.adjustSize()
+        self.btn_exit_step_mode.setVisible(False)
+        self.btn_exit_step_mode.setObjectName("btn_exit_step_mode")
+
+
+        self.btn_next_step.clicked.connect(self.show_next_step)
+        self.btn_prev_step.clicked.connect(self.show_prev_step)
+        self.btn_exit_step_mode.clicked.connect(self.exit_step_mode)
+
+    def resizeEvent(self, event):
+        """hiển thị các nút điều khiển ở góc dưới bên phải"""
+        super().resizeEvent(event)
+        self.btn_next_step.move(self.width() - 110, self.height() - 60)  
+        self.btn_prev_step.move(self.width() - 220, self.height() - 60) 
+        self.btn_exit_step_mode.move(self.width() - 80, self.height() - 500)  
+    def clear_hamilton_visualization(self):
+        """xóa các thông tin về chu trình Hamilton"""
+        self.hamilton_path = None
+        self.current_step_index = -1
+        self.hamilton_steps = []
+        self.btn_next_step.setVisible(False)
+        self.btn_prev_step.setVisible(False)
+        self.btn_exit_step_mode.setVisible(False)
+        self.update()
+
+    def set_hamilton_visualization(self, path):
+        """Set the Hamiltonian cycle path for visualization."""
+        self.hamilton_path = path
+        self.current_step_index = -1
+        self.hamilton_steps = []
+        self.btn_next_step.setVisible(False)
+        self.btn_prev_step.setVisible(False)
+        self.btn_exit_step_mode.setVisible(False)
+        self.update()
+
+    def set_hamilton_steps(self, steps):
+        """Set the steps for Hamiltonian cycle visualization."""
+        self.hamilton_steps = steps
+        self.current_step_index = -1
+        if steps:
+            self.btn_next_step.setVisible(True)
+            self.btn_prev_step.setVisible(True)
+            self.btn_exit_step_mode.setVisible(True)
+            self.show_next_step()
+        else:
+            self.btn_next_step.setVisible(False)
+            self.btn_prev_step.setVisible(False)
+            self.btn_exit_step_mode.setVisible(False)
+        self.update()
+
+    def show_next_step(self):
+        """Display the next step of the algorithm"""
+        if self.current_step_index < len(self.hamilton_steps) - 1:
+            self.current_step_index += 1
+            self.hamilton_path = self.hamilton_steps[self.current_step_index]['path']
+            self.update()
+            self.parent().update_step_display(self.current_step_index)
+
+    def show_prev_step(self):
+        """Hiên thị bước trước đó của thuật toán"""
+        if self.current_step_index > 0:
+            self.current_step_index -= 1
+            self.hamilton_path = self.hamilton_steps[self.current_step_index]['path']
+            self.update()
+            self.parent().update_step_display(self.current_step_index)
+
+    def exit_step_mode(self):
+        """Thoát chế độ thực hiện từng bước"""
+        self.clear_hamilton_visualization()
+        self.parent().exit_step_mode()
+
+    def is_edge_in_hamilton_path(self, edge_start, edge_end):
+        """Kiểm tra xem cạnh có nằm trong chu trình Hamilton hay không"""
+        if not self.hamilton_path or len(self.hamilton_path) < 2:
+            return False
+        
+        for i in range(len(self.hamilton_path) - 1):
+            path_start = self.hamilton_path[i]
+            path_end = self.hamilton_path[i + 1]
+            if (edge_start == path_start and edge_end == path_end) or \
+               (edge_start == path_end and edge_end == path_start):
+                return True
+        return False
 
     def keyReleaseEvent(self, event):
         if event.key() == Qt.Key_Delete:
@@ -41,48 +140,100 @@ class GraphArea(QWidget):
             self.update()
 
     def push_undo(self):
-        self.undo_stack.append((deepcopy(self.graph.vertices), deepcopy(self.graph.edges)))
+        state = (
+            deepcopy(self.graph.vertices),
+            deepcopy(self.graph.edges),
+            deepcopy(self.graph.edge_control_points)
+        )
+        self.undo_stack.append(state)
         self.redo_stack.clear()
 
     def undo(self):
         if self.undo_stack:
-            self.redo_stack.append((deepcopy(self.graph.vertices), deepcopy(self.graph.edges)))
-            vertices, edges = self.undo_stack.pop()
+            current_state = (
+                deepcopy(self.graph.vertices),
+                deepcopy(self.graph.edges),
+                deepcopy(self.graph.edge_control_points)
+            )
+            self.redo_stack.append(current_state)
+            vertices, edges, control_points = self.undo_stack.pop()
             self.graph.vertices = vertices
             self.graph.edges = edges
+            self.graph.edge_control_points = control_points
             self.update()
+            self.parent().update_vertex_combo()
 
     def redo(self):
-        if self.redo_stack:
-            self.push_undo()
-            vertices, edges = self.redo_stack.pop()
-            self.graph.vertices = vertices
-            self.graph.edges = edges
-            self.update()
-    def redo(self):
         if not self.redo_stack:
-            return  
-        self.undo_stack.append((deepcopy(self.graph.vertices), deepcopy(self.graph.edges)))
-        vertices, edges = self.redo_stack.pop()
+            return
+        current_state = (
+            deepcopy(self.graph.vertices),
+            deepcopy(self.graph.edges),
+            deepcopy(self.graph.edge_control_points)
+        )
+        self.undo_stack.append(current_state)
+        vertices, edges, control_points = self.redo_stack.pop()
         self.graph.vertices = vertices
         self.graph.edges = edges
+        self.graph.edge_control_points = control_points
         self.update()
+        self.parent().update_vertex_combo()
+
+    def find_control_point_at_pos(self, pos):
+        for edge in self.graph.edges:
+            name1, name2 = edge
+            pos1 = next((pos for n, pos in self.graph.vertices if n == name1), None)
+            pos2 = next((pos for n, pos in self.graph.vertices if n == name2), None)
+            if not pos1 or not pos2 or name1 == name2:
+                continue
+            control_point = self.graph.get_control_point(edge)
+            if control_point:
+                if self.is_point_near_curve(pos, pos1, pos2, control_point, 15):
+                    return edge
+            else:
+                if self.is_point_near_line(pos, pos1, pos2, 15):
+                    return edge
+        return None
 
     def mousePressEvent(self, event):
         if event.button() != Qt.LeftButton:
             return
 
         pos = event.pos()
-        self.last_mouse_pos = pos  
+        self.last_mouse_pos = pos
         mode = self.get_mode()
 
-        self.selected_vertex_idx = None
+        clicked_vertex = False
+        clicked_vertex_name = None
         for i, (name, vpos) in enumerate(self.graph.vertices):
             if (pos - vpos).manhattanLength() <= 20:
                 self.selected_vertex_idx = i
+                clicked_vertex = True
+                clicked_vertex_name = name
                 break
 
-        if self.selected_vertex_idx is None:
+        if clicked_vertex and clicked_vertex_name in self.area_selected_vertices:
+            self.dragging_area_selection = True
+            self.push_undo()
+            return
+
+        if not (clicked_vertex and clicked_vertex_name in self.area_selected_vertices):
+            self.area_selected_vertices.clear()
+            self.area_selected_edges.clear()
+
+        if not clicked_vertex and mode not in ["Xóa"]:
+            control_edge = self.find_control_point_at_pos(pos)
+            if control_edge:
+                self.selected_control_point = control_edge
+                self.dragging_control_point = True
+                self.push_undo()
+                if not self.graph.get_control_point(control_edge):
+                    self.graph.set_control_point(control_edge, pos)
+                self.update()
+                return
+
+        if not clicked_vertex and not self.dragging_control_point:
+            self.selected_vertex_idx = None
             self.selecting_area = True
             self.selection_start = pos
             self.selection_end = pos
@@ -94,6 +245,7 @@ class GraphArea(QWidget):
                 self.push_undo()
                 self.graph.add_vertex((name, pos))
                 self.update()
+                self.parent().update_vertex_combo()
 
         if mode == "Thêm cạnh":
             for name, vpos in self.graph.vertices:
@@ -114,24 +266,30 @@ class GraphArea(QWidget):
                     self.graph.remove_vertex((name, vpos))
                     self.selected_vertices.clear()
                     self.update()
+                    self.parent().update_vertex_combo()
                     return
-
             for name1, name2 in self.graph.edges:
                 pos1 = next((v for n, v in self.graph.vertices if n == name1), None)
                 pos2 = next((v for n, v in self.graph.vertices if n == name2), None)
                 if not pos1 or not pos2:
                     continue
-
                 if name1 == name2:
                     control_point = QPointF(pos1.x(), pos1.y() - 40)
-                    if self.is_point_near_line(pos, pos1, control_point, 15):
+                    if self.is_point_near_curve(pos, pos1, pos1, control_point, 15):
                         self.push_undo()
                         self.graph.remove_edge((name1, name2))
                         self.selected_vertices.clear()
                         self.update()
                         return
                 else:
-                    if self.is_point_near_line(pos, pos1, pos2, 10):
+                    control_point = self.graph.get_control_point((name1, name2))
+                    if control_point and self.is_point_near_curve(pos, pos1, pos2, control_point, 10):
+                        self.push_undo()
+                        self.graph.remove_edge((name1, name2))
+                        self.selected_vertices.clear()
+                        self.update()
+                        return
+                    elif not control_point and self.is_point_near_line(pos, pos1, pos2, 10):
                         self.push_undo()
                         self.graph.remove_edge((name1, name2))
                         self.selected_vertices.clear()
@@ -139,58 +297,116 @@ class GraphArea(QWidget):
                         return
 
     def mouseMoveEvent(self, event):
-        if not self.selecting_area and self.area_selected_vertices:
-            dx = event.pos().x() - self.last_mouse_pos.x()
-            dy = event.pos().y() - self.last_mouse_pos.y()
-            self.last_mouse_pos = event.pos()
-            for i, (name, pos) in enumerate(self.graph.vertices):
-                if name in self.area_selected_vertices:
-                    self.graph.vertices[i] = (name, QPointF(pos.x() + dx, pos.y() + dy))
+        if not event.buttons() & Qt.LeftButton:
+            return
+
+        if self.dragging_control_point and self.selected_control_point:
+            self.graph.set_control_point(self.selected_control_point, event.pos())
             self.update()
+            return
+
+        if self.dragging_area_selection and self.area_selected_vertices:
+            if self.last_mouse_pos:
+                dx = event.pos().x() - self.last_mouse_pos.x()
+                dy = event.pos().y() - self.last_mouse_pos.y()
+                for i, (name, pos) in enumerate(self.graph.vertices):
+                    if name in self.area_selected_vertices:
+                        new_pos = QPointF(pos.x() + dx, pos.y() + dy)
+                        self.graph.vertices[i] = (name, new_pos)
+                self.update_all_related_control_points()
+                self.update()
+            self.last_mouse_pos = event.pos()
             return
 
         if self.selected_vertex_idx is not None:
             if 0 <= self.selected_vertex_idx < len(self.graph.vertices):
                 name, _ = self.graph.vertices[self.selected_vertex_idx]
                 self.graph.vertices[self.selected_vertex_idx] = (name, event.pos())
+                self.update_related_control_points(name)
                 self.update()
-        elif self.selecting_area:
+            return
+
+        if self.selecting_area:
             self.selection_end = event.pos()
             self.update()
+            return
+
+    def update_all_related_control_points(self):
+        for edge in list(self.graph.edge_control_points.keys()):
+            name1, name2 = edge
+            if name1 in self.area_selected_vertices and name2 in self.area_selected_vertices:
+                self.update_control_point_for_edge(edge)
+
+    def update_related_control_points(self, vertex_name):
+        new_pos = next((p for n, p in self.graph.vertices if n == vertex_name), None)
+        if not new_pos:
+            return
+        for edge in list(self.graph.edge_control_points.keys()):
+            if vertex_name in edge:
+                self.update_control_point_for_edge(edge)
+
+    def update_control_point_for_edge(self, edge):
+        name1, name2 = edge
+        pos1 = next((p for n, p in self.graph.vertices if n == name1), None)
+        pos2 = next((p for n, p in self.graph.vertices if n == name2), None)
+        if not pos1 or not pos2:
+            return
+        control_point = self.graph.get_control_point(edge)
+        if not control_point:
+            return
+        edge_vector = QPointF(pos2.x() - pos1.x(), pos2.y() - pos1.y())
+        perpendicular = QPointF(-edge_vector.y(), edge_vector.x())
+        mid_point = QPointF((pos1.x() + pos2.x()) / 2, (pos1.y() + pos2.y()) / 2)
+        if edge_vector.x() == 0 and edge_vector.y() == 0:
+            return
+        perp_length = (perpendicular.x() ** 2 + perpendicular.y() ** 2) ** 0.5
+        if perp_length > 0:
+            perpendicular = QPointF(perpendicular.x() / perp_length, perpendicular.y() / perp_length)
+        cp_to_mid = QPointF(control_point.x() - mid_point.x(), control_point.y() - mid_point.y())
+        distance = cp_to_mid.x() * perpendicular.x() + cp_to_mid.y() * perpendicular.y()
+        new_control_point = QPointF(
+            mid_point.x() + distance * perpendicular.x(),
+            mid_point.y() + distance * perpendicular.y()
+        )
+        self.graph.set_control_point(edge, new_control_point)
 
     def mouseReleaseEvent(self, event):
         self.selected_vertex_idx = None
-        self.last_mouse_pos = None  
-
+        self.dragging_control_point = False
+        self.selected_control_point = None
+        self.dragging_area_selection = False
         if self.selecting_area:
             self.selecting_area = False
             self.area_selected_vertices.clear()
             self.area_selected_edges.clear()
-
             rect = QRect(
                 self.selection_start.toPoint() if isinstance(self.selection_start, QPointF) else self.selection_start,
                 self.selection_end.toPoint() if isinstance(self.selection_end, QPointF) else self.selection_end
             ).normalized()
-
             for name, pos in self.graph.vertices:
                 if rect.contains(pos.toPoint() if isinstance(pos, QPointF) else pos):
                     self.area_selected_vertices.append(name)
-
             for name1, name2 in self.graph.edges:
                 pos1 = next((p for n, p in self.graph.vertices if n == name1), None)
                 pos2 = next((p for n, p in self.graph.vertices if n == name2), None)
                 if pos1 and pos2 and rect.contains(pos1.toPoint() if isinstance(pos1, QPointF) else pos1) \
                         and rect.contains(pos2.toPoint() if isinstance(pos2, QPointF) else pos2):
                     self.area_selected_edges.append((name1, name2))
-
             self.update()
 
     def delete_selected(self):
         self.graph.vertices = [(n, p) for (n, p) in self.graph.vertices if n not in self.area_selected_vertices]
         self.graph.edges = [(a, b) for (a, b) in self.graph.edges if a not in self.area_selected_vertices and b not in self.area_selected_vertices]
+        edges_to_remove = []
+        for edge in self.graph.edge_control_points:
+            if edge[0] in self.area_selected_vertices or edge[1] in self.area_selected_vertices:
+                edges_to_remove.append(edge)
+        for edge in edges_to_remove:
+            self.graph.edge_control_points.pop(edge, None)
         self.area_selected_vertices.clear()
         self.area_selected_edges.clear()
         self.update()
+        self.parent().update_vertex_combo()
 
     def copy_selection(self):
         self._copied = [
@@ -212,12 +428,12 @@ class GraphArea(QWidget):
             base_names.add(new_name)
             self.graph.vertices.append((new_name, pos + offset))
             new_names.append((name, new_name))
-
         old_to_new = dict(new_names)
         for a, b in self.graph.edges:
             if a in old_to_new and b in old_to_new:
                 self.graph.edges.append((old_to_new[a], old_to_new[b]))
         self.update()
+        self.parent().update_vertex_combo()
 
     def is_point_near_line(self, p, a, b, tolerance=10):
         ab = b - a
@@ -231,22 +447,39 @@ class GraphArea(QWidget):
         dy = projection.y() - p.y()
         return hypot(dx, dy) <= tolerance
 
+    def is_point_near_curve(self, point, start, end, control, tolerance=10):
+        for t in [i/20.0 for i in range(21)]:
+            curve_point = QPointF(
+                (1-t)**2 * start.x() + 2*(1-t)*t * control.x() + t**2 * end.x(),
+                (1-t)**2 * start.y() + 2*(1-t)*t * control.y() + t**2 * end.y()
+            )
+            if (point - curve_point).manhattanLength() <= tolerance:
+                return True
+        return False
+
+    def draw_bezier_curve(self, painter, start, end, control):
+        path = QPainterPath()
+        path.moveTo(start)
+        path.quadTo(control, end)
+        painter.drawPath(path)
+
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         painter.fillRect(self.rect(), Qt.white)
-
-        mode = self.get_mode()
 
         for start, end in self.graph.edges:
             pos1 = next((p for n, p in self.graph.vertices if n == start), None)
             pos2 = next((p for n, p in self.graph.vertices if n == end), None)
             if not pos1 or not pos2:
                 continue
-
-            color = QColor("deepskyblue") if (start, end) in self.area_selected_edges or (end, start) in self.area_selected_edges else Qt.black
-            painter.setPen(QPen(color, 3))
-
+            is_hamilton_edge = self.is_edge_in_hamilton_path(start, end)
+            if is_hamilton_edge:
+                painter.setPen(QPen(QColor("green"), 5))
+            elif (start, end) in self.area_selected_edges or (end, start) in self.area_selected_edges:
+                painter.setPen(QPen(QColor("deepskyblue"), 3))
+            else:
+                painter.setPen(QPen(Qt.black, 2))
             if start == end:
                 path = QPainterPath()
                 path.moveTo(pos1)
@@ -255,10 +488,13 @@ class GraphArea(QWidget):
                 path.cubicTo(ctrl1, ctrl2, pos1)
                 painter.drawPath(path)
             else:
-                painter.drawLine(pos1, pos2)
+                control_point = self.graph.get_control_point((start, end))
+                if control_point:
+                    self.draw_bezier_curve(painter, pos1, pos2, control_point)
+                else:
+                    painter.drawLine(pos1, pos2)
 
-        highlight = self.selected_vertices if mode == "Thêm cạnh" else []
-
+        highlight = self.selected_vertices if self.get_mode() == "Thêm cạnh" else []
         for name, pos in self.graph.vertices:
             if name in highlight:
                 pen = QPen(Qt.red, 4)
@@ -266,18 +502,23 @@ class GraphArea(QWidget):
             elif name in self.area_selected_vertices:
                 pen = QPen(QColor("deepskyblue"), 4)
                 brush = QBrush(Qt.white)
+            elif self.hamilton_path and name in self.hamilton_path:
+                pen = QPen(QColor("green"), 4)
+                brush = QBrush(QColor("lightgreen"))
             else:
-                pen = QPen(Qt.black, 3)
+                pen = QPen(Qt.black, 2)
                 brush = QBrush(Qt.white)
-
             painter.setPen(pen)
             painter.setBrush(brush)
             painter.drawEllipse(pos, 20, 20)
-
             label_rect = QRect(int(pos.x()) - 20, int(pos.y()) - 20, 40, 40)
             font = painter.font()
             font.setBold(True)
             painter.setFont(font)
+            if self.hamilton_path and name in self.hamilton_path:
+                painter.setPen(QPen(Qt.darkGreen, 2))
+            else:
+                painter.setPen(QPen(Qt.black, 2))
             painter.drawText(label_rect, Qt.AlignCenter, name)
 
         if self.selecting_area:
@@ -288,3 +529,10 @@ class GraphArea(QWidget):
                 self.selection_end.toPoint() if isinstance(self.selection_end, QPointF) else self.selection_end
             ).normalized()
             painter.drawRect(selection_rect)
+
+        if self.dragging_control_point and self.selected_control_point:
+            control_point = self.graph.get_control_point(self.selected_control_point)
+            # if control_point:
+            #     painter.setPen(QPen(Qt.red, 2))
+            #     painter.setBrush(QBrush(Qt.red))
+            #     painter.drawEllipse(control_point, self.control_point_radius, self.control_point_radius)

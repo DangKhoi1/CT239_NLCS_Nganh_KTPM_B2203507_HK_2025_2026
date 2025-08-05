@@ -97,6 +97,16 @@ QPushButton#btn_clear:hover {
   background-color: #c62828;
 }
 
+QPushButton#btn_next_step,
+QPushButton#btn_prev_step {
+  background-color: #7e57c2;
+  color: white;
+}
+QPushButton#btn_next_step:hover,
+QPushButton#btn_prev_step:hover {
+  background-color: #6d47a1;
+}
+
 GraphArea#graph_area {
   border-radius: 10px;
 }
