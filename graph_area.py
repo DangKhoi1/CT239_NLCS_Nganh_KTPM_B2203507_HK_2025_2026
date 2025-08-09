@@ -28,8 +28,7 @@ class GraphArea(QWidget):
         self.current_step_index = -1
         self.hamilton_steps = []
         
-        
-
+        # Initialize step-by-step buttons
         self.btn_next_step = QPushButton("Bước tiếp", self)
         self.btn_next_step.adjustSize()
         self.btn_next_step.setVisible(False)
@@ -41,25 +40,35 @@ class GraphArea(QWidget):
         self.btn_exit_step_mode.setVisible(False)
         self.btn_exit_step_mode.setObjectName("btn_exit_step_mode")
 
+        # Initialize stop button
+        self.btn_stop = QPushButton("Dừng", self)
+        self.btn_stop.adjustSize()
+        self.btn_stop.setVisible(False)
+        self.btn_stop.setObjectName("btn_stop")
 
+        # Connect buttons
         self.btn_next_step.clicked.connect(self.show_next_step)
         self.btn_prev_step.clicked.connect(self.show_prev_step)
         self.btn_exit_step_mode.clicked.connect(self.exit_step_mode)
+        self.btn_stop.clicked.connect(self.stop_algorithm)
 
     def resizeEvent(self, event):
-        """hiển thị các nút điều khiển ở góc dưới bên phải"""
+        """Position buttons in the graph area"""
         super().resizeEvent(event)
-        self.btn_next_step.move(self.width() - 110, self.height() - 60)  
-        self.btn_prev_step.move(self.width() - 220, self.height() - 60) 
-        self.btn_exit_step_mode.move(self.width() - 80, self.height() - 500)  
+        self.btn_next_step.move(self.width() - 110, self.height() - 60)
+        self.btn_prev_step.move(self.width() - 220, self.height() - 60)
+        self.btn_exit_step_mode.move(self.width() - 80, self.height() - 500)
+        self.btn_stop.move(self.width() - 80, 10)  # Top-right corner
+
     def clear_hamilton_visualization(self):
-        """xóa các thông tin về chu trình Hamilton"""
+        """Clear all Hamiltonian visualization data"""
         self.hamilton_path = None
         self.current_step_index = -1
         self.hamilton_steps = []
         self.btn_next_step.setVisible(False)
         self.btn_prev_step.setVisible(False)
         self.btn_exit_step_mode.setVisible(False)
+        self.btn_stop.setVisible(False)
         self.update()
 
     def set_hamilton_visualization(self, path):
@@ -70,6 +79,7 @@ class GraphArea(QWidget):
         self.btn_next_step.setVisible(False)
         self.btn_prev_step.setVisible(False)
         self.btn_exit_step_mode.setVisible(False)
+        self.btn_stop.setVisible(True)  # Show stop button when algorithm is running
         self.update()
 
     def set_hamilton_steps(self, steps):
@@ -80,11 +90,13 @@ class GraphArea(QWidget):
             self.btn_next_step.setVisible(True)
             self.btn_prev_step.setVisible(True)
             self.btn_exit_step_mode.setVisible(True)
+            self.btn_stop.setVisible(False)  # Hide stop button in step mode
             self.show_next_step()
         else:
             self.btn_next_step.setVisible(False)
             self.btn_prev_step.setVisible(False)
             self.btn_exit_step_mode.setVisible(False)
+            self.btn_stop.setVisible(False)
         self.update()
 
     def show_next_step(self):
@@ -96,7 +108,7 @@ class GraphArea(QWidget):
             self.parent().update_step_display(self.current_step_index)
 
     def show_prev_step(self):
-        """Hiên thị bước trước đó của thuật toán"""
+        """Display the previous step of the algorithm"""
         if self.current_step_index > 0:
             self.current_step_index -= 1
             self.hamilton_path = self.hamilton_steps[self.current_step_index]['path']
@@ -104,12 +116,17 @@ class GraphArea(QWidget):
             self.parent().update_step_display(self.current_step_index)
 
     def exit_step_mode(self):
-        """Thoát chế độ thực hiện từng bước"""
+        """Exit step-by-step mode"""
         self.clear_hamilton_visualization()
         self.parent().exit_step_mode()
 
+    def stop_algorithm(self):
+        """Stop the current algorithm visualization"""
+        self.clear_hamilton_visualization()
+        self.parent().result_output.setPlainText("Đã dừng thuật toán.")
+
     def is_edge_in_hamilton_path(self, edge_start, edge_end):
-        """Kiểm tra xem cạnh có nằm trong chu trình Hamilton hay không"""
+        """Check if an edge is in the Hamiltonian path"""
         if not self.hamilton_path or len(self.hamilton_path) < 2:
             return False
         

@@ -1,11 +1,12 @@
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QComboBox, QTextEdit, QSizePolicy, QFileDialog, QMessageBox
 )
+from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
 from graph_area import GraphArea
 from graph import Graph
 from graph import generate_random_graph, export_file, import_file, format_graph_circular, format_graph_grid, format_graph_spring, format_graph_hierarchical
-from graph_algorithms import hamiltonian_cycle_with_steps, connected_components
+from graph_algorithms import hamiltonian_cycle_with_steps, hamiltonian_cycle_branch_and_bound, hamiltonian_cycle_brute_force, connected_components
 from PyQt5.QtGui import QIcon
 import pathlib
 
@@ -92,7 +93,7 @@ class GraphGUI(QWidget):
         label_algo.setObjectName("label_algo")
         control_panel.addWidget(label_algo) 
         self.algorithm_combo = QComboBox()
-        self.algorithm_combo.addItems(["Quay lui"])
+        self.algorithm_combo.addItems(["Quay lui", "Nhánh cận", "Brute Force"])
         self.algorithm_combo.setStyleSheet("padding-left: 15px;")
         self.algorithm_combo.setObjectName("algorithm_combo")
         control_panel.addWidget(self.algorithm_combo)
@@ -176,11 +177,14 @@ class GraphGUI(QWidget):
         self.instruction_label.setText(f"{base_instruction}\n{curve_instruction}")
 
     def update_vertex_combo(self):
-        """Update the vertex selection combo box with current graph vertices."""
+        """Cập nhật combo box chọn đỉnh với các đỉnh hiện tại của đồ thị."""
+        current_start = self.start_vertex_combo.currentText()
         self.start_vertex_combo.clear()
         self.start_vertex_combo.addItem("Mặc định")
         for name, _ in self.graph.vertices:
             self.start_vertex_combo.addItem(name)
+        if current_start in [name for name, _ in self.graph.vertices] or current_start == "Mặc định":
+            self.start_vertex_combo.setCurrentText(current_start)
 
     def exit_step_mode(self):
         """Khởi động lại chế độ thực hiện từng bước và xóa kết quả hiển thị"""
@@ -260,30 +264,34 @@ class GraphGUI(QWidget):
             self.is_step_mode = False
             return
         algo = self.algorithm_combo.currentText()
+        start_vertex = self.start_vertex_combo.currentText()
+        if start_vertex == "Mặc định":
+            start_vertex = None
         if algo == "Quay lui":
-            start_vertex = self.start_vertex_combo.currentText()
-            if start_vertex == "Mặc định":
-                start_vertex = None
             result = hamiltonian_cycle_with_steps(self.graph, start_vertex=start_vertex)
-            self.hamilton_steps = result['steps']
-            if self.is_step_mode:
-                self.graph_area.set_hamilton_steps(self.hamilton_steps)
-                self.update_step_display(0)
+        elif algo == "Nhánh cận":
+            result = hamiltonian_cycle_branch_and_bound(self.graph, start_vertex=start_vertex)
+        elif algo == "Brute Force":
+            result = hamiltonian_cycle_brute_force(self.graph, start_vertex=start_vertex)
+        self.hamilton_steps = result['steps']
+        if self.is_step_mode:
+            self.graph_area.set_hamilton_steps(self.hamilton_steps)
+            self.update_step_display(0)
+        else:
+            self.graph_area.set_hamilton_visualization(result['path'])
+            if result['success']:
+                output = "Chu trình Hamilton tìm được:\n" + " → ".join(result['path']) + "\n\n"
+                output += "Các bước thực hiện:\n"
+                for step in result['steps']:
+                    output += f"{step['action']}\n"
+                output += f"\nTổng số bước: {result['total_steps']}"
+                self.result_output.setPlainText(output)
             else:
-                self.graph_area.set_hamilton_visualization(result['path'])
-                if result['success']:
-                    output = "Chu trình Hamilton tìm được:\n" + " → ".join(result['path']) + "\n\n"
-                    output += "Các bước thực hiện:\n"
-                    for step in result['steps']:
-                        output += f"{step['action']}\n"
-                    output += f"\nTổng số bước: {result['total_steps']}"
-                    self.result_output.setPlainText(output)
-                else:
-                    output = "Không tìm thấy chu trình Hamilton.\n\nCác bước thực hiện:\n"
-                    for step in result['steps']:
-                        output += f"{step['action']}\n"
-                    output += f"\nTổng số bước: {result['total_steps']}"
-                    self.result_output.setPlainText(output)
+                output = "Không tìm thấy chu trình Hamilton.\n\nBởi vì:\n"
+                for step in result['steps']:
+                    output += f"{step['action']}\n"
+                output += f"\nTổng số bước: {result['total_steps']}"
+                self.result_output.setPlainText(output)
 
     def update_step_display(self, step_index):
         """Update result text based on the current step"""
@@ -320,41 +328,78 @@ class GraphGUI(QWidget):
             except Exception as e:
                 QMessageBox.critical(self, "Lỗi", f"Không thể nhập file: {str(e)}")
 
+
     def update_graph_info(self):
         if not self.graph.vertices:
             self.info_box.setPlainText("Không có đồ thị để hiển thị thông tin.")
             return
+
+        # 1) Đảm bảo font monospace để các cột thẳng hàng
+        mono = QFont("Consolas")
+        if not mono.fixedPitch():
+            mono = QFont("Courier New")
+        self.info_box.setFont(mono)
+
         num_vertices = len(self.graph.vertices)
         num_edges = len(self.graph.edges)
         vertex_names = [name for name, _ in self.graph.vertices]
-        info_text = f"Số đỉnh: {num_vertices}\n"
-        info_text += f"Số cạnh: {num_edges}\n"
-        info_text += f"Danh sách đỉnh: {', '.join(vertex_names)}\n"
-        if self.graph.edges:
-            edge_list = [f"{u}-{v}" for u, v in self.graph.edges]
-            info_text += f"Danh sách cạnh: {', '.join(edge_list)}\n"
-        info_text += "\nMa trận kề:\n"
-        matrix = self.build_adjacency_matrix()
-        headers = [name for name, _ in self.graph.vertices]
-        info_text += "   " + "  ".join(headers) + "\n"
+
+        # 2) Danh sách cạnh: hỗ trợ cả 2-tuples và 3-tuples
+        def edge_uv(e):
+            return (e[0], e[1]) if len(e) >= 2 else e
+
+        edge_list = [f"{u}-{v}" for e in self.graph.edges for (u, v) in [edge_uv(e)]]
+
+        # 3) Ma trận + định dạng cột theo độ rộng lớn nhất
+        matrix, headers = self.build_adjacency_matrix()
+
+        col_w = max(3, max((len(h) for h in headers), default=1))
+        def cell(s): return str(s).ljust(col_w)
+        def head(s): return str(s).ljust(col_w)
+
+        lines = []
+        lines.append(f"Số đỉnh: {num_vertices}")
+        lines.append(f"Số cạnh: {num_edges}")
+        lines.append(f"Danh sách đỉnh: {', '.join(vertex_names)}")
+        if edge_list:
+            lines.append(f"Danh sách cạnh: {', '.join(edge_list)}")
+
+        lines.append("")
+        lines.append("Ma trận kề:")
+        # Hàng tiêu đề
+        lines.append(" " * (col_w + 1) + " ".join(head(h) for h in headers))
+        # Các hàng dữ liệu
         for i, row in enumerate(matrix):
-            info_text += headers[i] + "  " + "  ".join(str(cell) for cell in row) + "\n"
-        info_text += "\nBậc của từng đỉnh:\n"
+            lines.append(head(headers[i]) + " " + " ".join(cell(x) for x in row))
+
+        # 4) Bậc đỉnh
+        lines.append("")
+        lines.append("Bậc của từng đỉnh:")
         for i, row in enumerate(matrix):
             degree = sum(row)
-            info_text += f"Đỉnh {headers[i]}: {degree}\n"
-        self.info_box.setPlainText(info_text)
+            lines.append(f"Đỉnh {headers[i]}: {degree}")
+
+        self.info_box.setPlainText("\n".join(lines))
+
 
     def build_adjacency_matrix(self):
+        # Hỗ trợ đồ thị vô hướng; edges có thể là (u,v) hoặc (u,v,control)
         vertices = [name for name, _ in self.graph.vertices]
-        idx_map = {name: i for i, name in enumerate(vertices)}
+        idx = {name: i for i, name in enumerate(vertices)}
         n = len(vertices)
-        matrix = [[0] * n for _ in range(n)]
-        for u, v in self.graph.edges:
-            i, j = idx_map[u], idx_map[v]
-            matrix[i][j] = 1
-            matrix[j][i] = 1
-        return matrix
+        A = [[0]*n for _ in range(n)]
+
+        for e in self.graph.edges:
+            if len(e) < 2:
+                continue
+            u, v = e[0], e[1]
+            if u in idx and v in idx:
+                i, j = idx[u], idx[v]
+                A[i][j] = 1
+                A[j][i] = 1  # nếu vô hướng
+
+        return A, vertices
+
 
     def handle_option_change(self, option):
         if option == "Xuất file":
