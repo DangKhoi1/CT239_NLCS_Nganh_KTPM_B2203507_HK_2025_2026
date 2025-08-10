@@ -1,3 +1,5 @@
+# Updated gui.py with modified run_connected_components function
+
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QComboBox, QTextEdit, QSizePolicy, QFileDialog, QMessageBox
 )
@@ -26,7 +28,7 @@ class GraphGUI(QWidget):
         self.is_step_mode = False
 
         outer_layout = QVBoxLayout(self)
-        heading = QLabel("ỨNG DỤNG VẼ VÀ XỬ LÝ ĐỒ THỊ BẰNG GIẢI THUẬT TÌM CHU TRÌNH HAMILTON")
+        heading = QLabel("ỨNG DỤNG VẼ VÀ XỬ LÝ ĐỒ THỊ VÔ HƯỚNG - ÁP DỤNG GIẢI THUẬT TÌM CHU TRÌNH HAMILTON")
         heading.setAlignment(Qt.AlignCenter)
         outer_layout.addWidget(heading)
         heading.setObjectName("heading")
@@ -222,7 +224,7 @@ class GraphGUI(QWidget):
         num_vertices = len(self.graph.vertices)
         num_edges = len(self.graph.edges)
         if num_edges == num_vertices - 1:
-            return connected_components(self.graph) == 1
+            return connected_components(self.graph)[0] == 1
         return False
 
     def generate_random_graph(self):
@@ -423,8 +425,11 @@ class GraphGUI(QWidget):
         if not self.graph.vertices:
             self.components.setPlainText("Không có đồ thị để kiểm tra.")
             return
-        num_components = connected_components(self.graph)
-        self.components.setPlainText(f"Số miền liên thông: {num_components}")
+        num_components, component_list = connected_components(self.graph)
+        output = f"Số miền liên thông: {num_components}\n\n"
+        for i, comp in enumerate(component_list, 1):
+            output += f"Miền {i}: {', '.join(comp)}\n"
+        self.components.setPlainText(output)
     
     def run_export_image(self):
         file_path, _ = QFileDialog.getSaveFileName(

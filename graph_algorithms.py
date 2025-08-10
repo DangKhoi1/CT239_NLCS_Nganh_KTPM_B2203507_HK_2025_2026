@@ -1,8 +1,8 @@
 from collections import deque
 import itertools
 
-def check_hamiltonian_conditions(graph):
-    """Kiểm tra điều kiện cần cho chu trình Hamilton dựa trên định lý Dirac"""
+def check_dirac_condition(graph):
+    """Kiểm tra điều kiện đủ cho chu trình Hamilton dựa trên định lý Dirac"""
     vertices = [v[0] for v in graph.vertices]
     n = len(vertices)
     if n < 3:
@@ -15,32 +15,30 @@ def check_hamiltonian_conditions(graph):
     
     for v in vertices:
         if len(adjacency[v]) < n / 2:
-            return False, f"Đỉnh {v} có bậc {len(adjacency[v])} < {n/2}, không thỏa định lý Dirac"
-    return True, "Đồ thị thỏa điều kiện cần của định lý Dirac"
+            return False, f"Không thỏa định lý Dirac: Đỉnh {v} có bậc {len(adjacency[v])} < {n/2}"
+    return True, "Thỏa định lý Dirac (mọi đỉnh có bậc >= n/2)"
 
-def hamiltonian_cycle(graph):
+def check_ore_condition(graph):
+    """Kiểm tra điều kiện đủ cho chu trình Hamilton dựa trên định lý Ore"""
     vertices = [v[0] for v in graph.vertices]
+    n = len(vertices)
+    if n < 3:
+        return False, "Đồ thị cần ít nhất 3 đỉnh để có chu trình Hamilton"
+    
     adjacency = {v: set() for v in vertices}
     for u, v in graph.edges:
         adjacency[u].add(v)
         adjacency[v].add(u)
-
-    path = [vertices[0]]
-
-    def backtrack(pos):
-        if len(path) == len(vertices):
-            return path[0] in adjacency[path[-1]]
-        for v in vertices:
-            if v not in path and v in adjacency[path[-1]]:
-                path.append(v)
-                if backtrack(pos + 1):
-                    return True
-                path.pop()
-        return False
-
-    if backtrack(1):
-        return path + [path[0]]
-    return None
+    
+    degrees = {v: len(adjacency[v]) for v in vertices}
+    
+    for i in range(n):
+        for j in range(i + 1, n):
+            u, v = vertices[i], vertices[j]
+            if v not in adjacency[u]:
+                if degrees[u] + degrees[v] < n:
+                    return False, f"Không thỏa định lý Ore: Cặp {u}-{v} không kề, tổng bậc {degrees[u] + degrees[v]} < {n}"
+    return True, "Thỏa định lý Ore (mọi cặp không kề có tổng bậc >= n)"
 
 def hamiltonian_cycle_with_steps(graph, start_vertex=None):
     """Tìm chu trình Hamilton với chi tiết các bước, bắt đầu từ đỉnh được chỉ định"""
@@ -67,21 +65,11 @@ def hamiltonian_cycle_with_steps(graph, start_vertex=None):
         adjacency[v].add(u)
 
     # Kiểm tra đồ thị liên thông
-    if connected_components(graph) > 1:
+    if connected_components(graph)[0] > 1:
         return {
             'success': False,
             'path': None,
             'steps': [{'step': 1, 'path': [], 'action': 'Đồ thị không liên thông - không thể có chu trình Hamilton'}],
-            'total_steps': 1
-        }
-    
-    # Kiểm tra điều kiện cần (Dirac)
-    is_valid, message = check_hamiltonian_conditions(graph)
-    if not is_valid:
-        return {
-            'success': False,
-            'path': None,
-            'steps': [{'step': 1, 'path': [], 'action': message}],
             'total_steps': 1
         }
     
@@ -111,6 +99,38 @@ def hamiltonian_cycle_with_steps(graph, start_vertex=None):
         'path': path.copy(),
         'action': f"Khởi tạo: Bắt đầu từ đỉnh {start_vertex}"
     })
+
+    # Kiểm tra định lý Dirac và Ore
+    dirac_valid, dirac_msg = check_dirac_condition(graph)
+    step_count += 1
+    steps.append({
+        'step': step_count,
+        'path': [],
+        'action': dirac_msg
+    })
+
+    ore_valid, ore_msg = check_ore_condition(graph)
+    step_count += 1
+    steps.append({
+        'step': step_count,
+        'path': [],
+        'action': ore_msg
+    })
+
+    if dirac_valid or ore_valid:
+        step_count += 1
+        steps.append({
+            'step': step_count,
+            'path': [],
+            'action': 'Vì thỏa ít nhất một định lý đủ (Dirac hoặc Ore), tồn tại chu trình Hamilton. Đang tìm...'
+        })
+    else:
+        step_count += 1
+        steps.append({
+            'step': step_count,
+            'path': [],
+            'action': 'Không thỏa các định lý đủ Dirac hoặc Ore, nhưng chu trình có thể vẫn tồn tại. Đang thử tìm bằng thuật toán.'
+        })
 
     def backtrack(pos):
         nonlocal step_count
@@ -228,21 +248,11 @@ def hamiltonian_cycle_branch_and_bound(graph, start_vertex=None):
         adjacency[v].add(u)
 
     # Kiểm tra đồ thị liên thông
-    if connected_components(graph) > 1:
+    if connected_components(graph)[0] > 1:
         return {
             'success': False,
             'path': None,
             'steps': [{'step': 1, 'path': [], 'action': 'Đồ thị không liên thông - không thể có chu trình Hamilton'}],
-            'total_steps': 1
-        }
-    
-    # Kiểm tra điều kiện cần (Dirac)
-    is_valid, message = check_hamiltonian_conditions(graph)
-    if not is_valid:
-        return {
-            'success': False,
-            'path': None,
-            'steps': [{'step': 1, 'path': [], 'action': message}],
             'total_steps': 1
         }
     
@@ -272,6 +282,38 @@ def hamiltonian_cycle_branch_and_bound(graph, start_vertex=None):
         'path': path.copy(),
         'action': f"Khởi tạo (Nhánh cận): Bắt đầu từ đỉnh {start_vertex}"
     })
+
+    # Kiểm tra định lý Dirac và Ore
+    dirac_valid, dirac_msg = check_dirac_condition(graph)
+    step_count += 1
+    steps.append({
+        'step': step_count,
+        'path': [],
+        'action': dirac_msg
+    })
+
+    ore_valid, ore_msg = check_ore_condition(graph)
+    step_count += 1
+    steps.append({
+        'step': step_count,
+        'path': [],
+        'action': ore_msg
+    })
+
+    if dirac_valid or ore_valid:
+        step_count += 1
+        steps.append({
+            'step': step_count,
+            'path': [],
+            'action': 'Vì thỏa ít nhất một định lý đủ (Dirac hoặc Ore), tồn tại chu trình Hamilton. Đang tìm...'
+        })
+    else:
+        step_count += 1
+        steps.append({
+            'step': step_count,
+            'path': [],
+            'action': 'Không thỏa các định lý đủ Dirac hoặc Ore, nhưng chu trình có thể vẫn tồn tại. Đang thử tìm bằng thuật toán.'
+        })
 
     def is_promising(path, current_vertex):
         """Kiểm tra xem việc thêm đỉnh current_vertex có tiềm năng dẫn đến lời giải"""
@@ -438,21 +480,11 @@ def hamiltonian_cycle_brute_force(graph, start_vertex=None):
         adjacency[v].add(u)
 
     # Kiểm tra đồ thị liên thông
-    if connected_components(graph) > 1:
+    if connected_components(graph)[0] > 1:
         return {
             'success': False,
             'path': None,
             'steps': [{'step': 1, 'path': [], 'action': 'Đồ thị không liên thông - không thể có chu trình Hamilton'}],
-            'total_steps': 1
-        }
-    
-    # Kiểm tra điều kiện cần (Dirac)
-    is_valid, message = check_hamiltonian_conditions(graph)
-    if not is_valid:
-        return {
-            'success': False,
-            'path': None,
-            'steps': [{'step': 1, 'path': [], 'action': message}],
             'total_steps': 1
         }
     
@@ -481,6 +513,38 @@ def hamiltonian_cycle_brute_force(graph, start_vertex=None):
         'path': [start_vertex],
         'action': f"Khởi tạo (Brute Force): Bắt đầu từ đỉnh {start_vertex}"
     })
+
+    # Kiểm tra định lý Dirac và Ore
+    dirac_valid, dirac_msg = check_dirac_condition(graph)
+    step_count += 1
+    steps.append({
+        'step': step_count,
+        'path': [],
+        'action': dirac_msg
+    })
+
+    ore_valid, ore_msg = check_ore_condition(graph)
+    step_count += 1
+    steps.append({
+        'step': step_count,
+        'path': [],
+        'action': ore_msg
+    })
+
+    if dirac_valid or ore_valid:
+        step_count += 1
+        steps.append({
+            'step': step_count,
+            'path': [],
+            'action': 'Vì thỏa ít nhất một định lý đủ (Dirac hoặc Ore), tồn tại chu trình Hamilton. Đang tìm...'
+        })
+    else:
+        step_count += 1
+        steps.append({
+            'step': step_count,
+            'path': [],
+            'action': 'Không thỏa các định lý đủ Dirac hoặc Ore, nhưng chu trình có thể vẫn tồn tại. Đang thử tìm bằng thuật toán.'
+        })
 
     # Tạo tất cả hoán vị của các đỉnh còn lại
     remaining_vertices = [v for v in vertices if v != start_vertex]
@@ -563,17 +627,19 @@ def connected_components(graph):
         adjacency[v].add(u)
 
     visited = set()
-    count = 0
+    components = []
 
-    def dfs(u):
+    def dfs(u, component):
         visited.add(u)
+        component.append(u)
         for v in adjacency[u]:
             if v not in visited:
-                dfs(v)
+                dfs(v, component)
 
     for v in vertices:
         if v not in visited:
-            dfs(v)
-            count += 1
+            component = []
+            dfs(v, component)
+            components.append(sorted(component))  # Sắp xếp để dễ đọc
 
-    return count
+    return len(components), components
