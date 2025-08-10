@@ -416,7 +416,7 @@ def hamiltonian_cycle_branch_and_bound(graph, start_vertex=None):
 def hamiltonian_cycle_brute_force(graph, start_vertex=None):
     """Tìm chu trình Hamilton bằng Brute Force (hoán vị) với chi tiết các bước"""
     vertices = [v[0] for v in graph.vertices]
-    if len(vertices) == 0:
+    if len(vertices) == 0:  
         return {
             'success': False,
             'path': None,
