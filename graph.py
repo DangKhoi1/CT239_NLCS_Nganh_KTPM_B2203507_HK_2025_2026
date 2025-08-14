@@ -75,7 +75,9 @@ class Graph:
         self.edge_control_points.clear()
 
 
-def generate_random_graph(graph, num_vertices=6, edge_probability=0.4, width=600, height=500):
+def generate_random_graph(graph, num_vertices=None, edge_probability=0.4, width=600, height=500):
+    if num_vertices is None:
+        num_vertices = random.randint(3, 6)
     graph.clear()
     spacing = 360 / num_vertices
     center_x, center_y = width // 2, height // 2

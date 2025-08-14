@@ -11,6 +11,7 @@ from graph import generate_random_graph, export_file, import_file, format_graph_
 from graph_algorithms import hamiltonian_cycle_with_steps, hamiltonian_cycle_branch_and_bound, hamiltonian_cycle_brute_force, connected_components, check_dirac_condition, check_ore_condition
 from PyQt5.QtGui import QIcon
 import pathlib
+import random
 
 class GraphGUI(QWidget):
     def __init__(self):
@@ -234,7 +235,7 @@ class GraphGUI(QWidget):
 
     def generate_random_graph(self):
         self.graph_area.push_undo()
-        generate_random_graph(self.graph, num_vertices=6)
+        generate_random_graph(self.graph, num_vertices=random.randint(3,6))
         self.graph_area.selected_vertices.clear()
         self.graph_area.clear_hamilton_visualization()
         self.graph_area.update()
@@ -264,6 +265,21 @@ class GraphGUI(QWidget):
         self.update_vertex_combo()
 
     def check_condition_graph(self):
+        # vertices = [name for name, _ in self.graph.vertices]
+        # adjacency = {v: set() for v in vertices}
+        # for e in self.graph.edges:
+        #     if len(e) >= 2:
+        #         u, v = e[0], e[1]
+        #         if u in adjacency and v in adjacency:
+        #             adjacency[u].add(v)
+        #             adjacency[v].add(u)
+        # isolated_vertices = [v for v in vertices if len(adjacency[v]) == 0]
+        
+        if connected_components(self.graph)[0] > 1:
+            self.result_output.setPlainText( 
+            "Đồ thị không liên thông nên không thể có chu trình Hamilton.\n"
+            "Vì vậy không cần kiểm các định lý đủ Dirac/Ore (chúng chắc chắn không thỏa).")
+            return
         if not self.graph.vertices:
             self.result_output.setPlainText("Không có đồ thị để kiểm tra.")
             return
@@ -305,24 +321,24 @@ class GraphGUI(QWidget):
             result = hamiltonian_cycle_branch_and_bound(self.graph, start_vertex=start_vertex)
         elif algo == "Brute Force":
             result = hamiltonian_cycle_brute_force(self.graph, start_vertex=start_vertex)
-        self.hamilton_steps = result['steps']
+        self.hamilton_steps = result.get('steps', [])
         if self.is_step_mode:
             self.graph_area.set_hamilton_steps(self.hamilton_steps)
             self.update_step_display(0)
         else:
-            self.graph_area.set_hamilton_visualization(result['path'])
-            if result['success']:
-                output = "Chu trình Hamilton tìm được:\n" + " → ".join(result['path']) + "\n\n"
+            self.graph_area.set_hamilton_visualization(result.get('path', []))
+            if result.get('success'):
+                output = "Chu trình Hamilton tìm được:\n" + " → ".join(result.get('path', [])) + "\n\n"
                 output += "Các bước thực hiện:\n"
-                for step in result['steps']:
-                    output += f"{step['action']}\n"
-                output += f"\nTổng số bước: {result['total_steps']}"
+                for step in self.hamilton_steps:
+                    output += f"Bước {step.get('step', '')}: {step.get('action', '')}\n"
+                output += f"\nTổng số bước: {result.get('total_steps', len(self.hamilton_steps))}"
                 self.result_output.setPlainText(output)
             else:
                 output = "Không tìm thấy chu trình Hamilton.\n\nBởi vì:\n"
-                for step in result['steps']:
-                    output += f"{step['action']}\n"
-                output += f"\nTổng số bước: {result['total_steps']}"
+                for step in self.hamilton_steps:
+                    output += f"Bước {step.get('step', '')}: {step.get('action', '')}\n"
+                output += f"\nTổng số bước: {result.get('total_steps', len(self.hamilton_steps))}"
                 self.result_output.setPlainText(output)
 
     def update_step_display(self, step_index):
