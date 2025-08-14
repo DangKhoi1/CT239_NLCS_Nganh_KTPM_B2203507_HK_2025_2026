@@ -100,37 +100,37 @@ def hamiltonian_cycle_with_steps(graph, start_vertex=None):
         'action': f"Khởi tạo: Bắt đầu từ đỉnh {start_vertex}"
     })
 
-    # Kiểm tra định lý Dirac và Ore
-    dirac_valid, dirac_msg = check_dirac_condition(graph)
-    step_count += 1
-    steps.append({
-        'step': step_count,
-        'path': [],
-        'action': dirac_msg
-    })
+    # # Kiểm tra định lý Dirac và Ore
+    # dirac_valid, dirac_msg = check_dirac_condition(graph)
+    # step_count += 1
+    # steps.append({
+    #     'step': step_count,
+    #     'path': [],
+    #     'action': dirac_msg
+    # })
 
-    ore_valid, ore_msg = check_ore_condition(graph)
-    step_count += 1
-    steps.append({
-        'step': step_count,
-        'path': [],
-        'action': ore_msg
-    })
+    # ore_valid, ore_msg = check_ore_condition(graph)
+    # step_count += 1
+    # steps.append({
+    #     'step': step_count,
+    #     'path': [],
+    #     'action': ore_msg
+    # })
 
-    if dirac_valid or ore_valid:
-        step_count += 1
-        steps.append({
-            'step': step_count,
-            'path': [],
-            'action': 'Vì thỏa ít nhất một định lý đủ (Dirac hoặc Ore), tồn tại chu trình Hamilton. Đang tìm...'
-        })
-    else:
-        step_count += 1
-        steps.append({
-            'step': step_count,
-            'path': [],
-            'action': 'Không thỏa các định lý đủ Dirac hoặc Ore, nhưng chu trình có thể vẫn tồn tại. Đang thử tìm bằng thuật toán.'
-        })
+    # if dirac_valid or ore_valid:
+    #     step_count += 1
+    #     steps.append({
+    #         'step': step_count,
+    #         'path': [],
+    #         'action': 'Vì thỏa ít nhất một định lý đủ (Dirac hoặc Ore), tồn tại chu trình Hamilton. Đang tìm...'
+    #     })
+    # else:
+    #     step_count += 1
+    #     steps.append({
+    #         'step': step_count,
+    #         'path': [],
+    #         'action': 'Không thỏa các định lý đủ Dirac hoặc Ore, nhưng chu trình có thể vẫn tồn tại. Đang thử tìm bằng thuật toán.'
+    #     })
 
     def backtrack(pos):
         nonlocal step_count
@@ -283,37 +283,37 @@ def hamiltonian_cycle_branch_and_bound(graph, start_vertex=None):
         'action': f"Khởi tạo (Nhánh cận): Bắt đầu từ đỉnh {start_vertex}"
     })
 
-    # Kiểm tra định lý Dirac và Ore
-    dirac_valid, dirac_msg = check_dirac_condition(graph)
-    step_count += 1
-    steps.append({
-        'step': step_count,
-        'path': [],
-        'action': dirac_msg
-    })
+    # # Kiểm tra định lý Dirac và Ore
+    # dirac_valid, dirac_msg = check_dirac_condition(graph)
+    # step_count += 1
+    # steps.append({
+    #     'step': step_count,
+    #     'path': [],
+    #     'action': dirac_msg
+    # })
 
-    ore_valid, ore_msg = check_ore_condition(graph)
-    step_count += 1
-    steps.append({
-        'step': step_count,
-        'path': [],
-        'action': ore_msg
-    })
+    # ore_valid, ore_msg = check_ore_condition(graph)
+    # step_count += 1
+    # steps.append({
+    #     'step': step_count,
+    #     'path': [],
+    #     'action': ore_msg
+    # })
 
-    if dirac_valid or ore_valid:
-        step_count += 1
-        steps.append({
-            'step': step_count,
-            'path': [],
-            'action': 'Vì thỏa ít nhất một định lý đủ (Dirac hoặc Ore), tồn tại chu trình Hamilton. Đang tìm...'
-        })
-    else:
-        step_count += 1
-        steps.append({
-            'step': step_count,
-            'path': [],
-            'action': 'Không thỏa các định lý đủ Dirac hoặc Ore, nhưng chu trình có thể vẫn tồn tại. Đang thử tìm bằng thuật toán.'
-        })
+    # if dirac_valid or ore_valid:
+    #     step_count += 1
+    #     steps.append({
+    #         'step': step_count,
+    #         'path': [],
+    #         'action': 'Vì thỏa ít nhất một định lý đủ (Dirac hoặc Ore), tồn tại chu trình Hamilton. Đang tìm...'
+    #     })
+    # else:
+    #     step_count += 1
+    #     steps.append({
+    #         'step': step_count,
+    #         'path': [],
+    #         'action': 'Không thỏa các định lý đủ Dirac hoặc Ore, nhưng chu trình có thể vẫn tồn tại. Đang thử tìm bằng thuật toán.'
+    #     })
 
     def is_promising(path, current_vertex):
         """Kiểm tra xem việc thêm đỉnh current_vertex có tiềm năng dẫn đến lời giải"""
@@ -514,37 +514,37 @@ def hamiltonian_cycle_brute_force(graph, start_vertex=None):
         'action': f"Khởi tạo (Brute Force): Bắt đầu từ đỉnh {start_vertex}"
     })
 
-    # Kiểm tra định lý Dirac và Ore
-    dirac_valid, dirac_msg = check_dirac_condition(graph)
-    step_count += 1
-    steps.append({
-        'step': step_count,
-        'path': [],
-        'action': dirac_msg
-    })
+    # # Kiểm tra định lý Dirac và Ore
+    # dirac_valid, dirac_msg = check_dirac_condition(graph)
+    # step_count += 1
+    # steps.append({
+    #     'step': step_count,
+    #     'path': [],
+    #     'action': dirac_msg
+    # })
 
-    ore_valid, ore_msg = check_ore_condition(graph)
-    step_count += 1
-    steps.append({
-        'step': step_count,
-        'path': [],
-        'action': ore_msg
-    })
+    # ore_valid, ore_msg = check_ore_condition(graph)
+    # step_count += 1
+    # steps.append({
+    #     'step': step_count,
+    #     'path': [],
+    #     'action': ore_msg
+    # })
 
-    if dirac_valid or ore_valid:
-        step_count += 1
-        steps.append({
-            'step': step_count,
-            'path': [],
-            'action': 'Vì thỏa ít nhất một định lý đủ (Dirac hoặc Ore), tồn tại chu trình Hamilton. Đang tìm...'
-        })
-    else:
-        step_count += 1
-        steps.append({
-            'step': step_count,
-            'path': [],
-            'action': 'Không thỏa các định lý đủ Dirac hoặc Ore, nhưng chu trình có thể vẫn tồn tại. Đang thử tìm bằng thuật toán.'
-        })
+    # if dirac_valid or ore_valid:
+    #     step_count += 1
+    #     steps.append({
+    #         'step': step_count,
+    #         'path': [],
+    #         'action': 'Vì thỏa ít nhất một định lý đủ (Dirac hoặc Ore), tồn tại chu trình Hamilton. Đang tìm...'
+    #     })
+    # else:
+    #     step_count += 1
+    #     steps.append({
+    #         'step': step_count,
+    #         'path': [],
+    #         'action': 'Không thỏa các định lý đủ Dirac hoặc Ore, nhưng chu trình có thể vẫn tồn tại. Đang thử tìm bằng thuật toán.'
+    #     })
 
     # Tạo tất cả hoán vị của các đỉnh còn lại
     remaining_vertices = [v for v in vertices if v != start_vertex]

@@ -121,6 +121,14 @@ QPushButton#btn_stop:hover {
   background: #f97316;
 }
 
+QPushButton#btn_check_condition {
+  background: rgb(196, 141, 70);
+  border-color: #bb8456;
+  color: #fff;
+}
+QPushButton#btn_check_condition:hover {
+  background: #eac6ac;
+}
 /* =====================
    Inputs
    ===================== */

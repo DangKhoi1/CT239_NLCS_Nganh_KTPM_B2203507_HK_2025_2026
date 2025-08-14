@@ -8,7 +8,7 @@ from PyQt5.QtCore import Qt
 from graph_area import GraphArea
 from graph import Graph
 from graph import generate_random_graph, export_file, import_file, format_graph_circular, format_graph_grid, format_graph_spring, format_graph_hierarchical
-from graph_algorithms import hamiltonian_cycle_with_steps, hamiltonian_cycle_branch_and_bound, hamiltonian_cycle_brute_force, connected_components
+from graph_algorithms import hamiltonian_cycle_with_steps, hamiltonian_cycle_branch_and_bound, hamiltonian_cycle_brute_force, connected_components, check_dirac_condition, check_ore_condition
 from PyQt5.QtGui import QIcon
 import pathlib
 
@@ -120,8 +120,9 @@ class GraphGUI(QWidget):
         self.btn_random = QPushButton("Đồ thị ngẫu nhiên")
         self.btn_format = QPushButton("Format đồ thị")
         self.btn_clear = QPushButton("Xóa đồ thị")
-        
-        for btn in [self.btn_execute, self.btn_components, self.btn_random, self.btn_format, self.btn_clear]:
+        self.btn_check_condition = QPushButton("Kiểm tra đồ thị")
+
+        for btn in [self.btn_execute, self.btn_components, self.btn_random, self.btn_format, self.btn_clear, self.btn_check_condition]:
             control_panel.addSpacing(15)
             btn.setFixedHeight(30)
             control_panel.addWidget(btn)
@@ -135,6 +136,9 @@ class GraphGUI(QWidget):
                 btn.setObjectName("btn_format")
             elif btn == self.btn_clear:
                 btn.setObjectName("btn_clear")
+            elif btn == self.btn_check_condition:
+                self.btn_check_condition.setObjectName("btn_check_condition")
+
 
         control_panel.addSpacing(30)
         options_panel = QLabel("Tùy chọn")
@@ -154,7 +158,7 @@ class GraphGUI(QWidget):
         self.start_vertex_combo.setStyleSheet("padding-left: 15px;")
         self.start_vertex_combo.setObjectName("start_vertex_combo")
         control_panel.addWidget(self.start_vertex_combo)
-
+        
         control_panel.addStretch()
 
         self.btn_random.clicked.connect(self.generate_random_graph)
@@ -164,6 +168,7 @@ class GraphGUI(QWidget):
         self.options_combo.currentTextChanged.connect(self.handle_option_change)
         self.btn_components.clicked.connect(self.run_connected_components)
         self.btn_format.clicked.connect(self.auto_format_graph)
+        self.btn_check_condition.clicked.connect(self.check_condition_graph)
         self.update_instructions()
         self.update_vertex_combo()
 
@@ -257,6 +262,31 @@ class GraphGUI(QWidget):
         self.hamilton_steps = []
         self.is_step_mode = False
         self.update_vertex_combo()
+
+    def check_condition_graph(self):
+        if not self.graph.vertices:
+            self.result_output.setPlainText("Không có đồ thị để kiểm tra.")
+            return
+        
+        check1 = check_dirac_condition(self.graph)
+        check2 = check_ore_condition(self.graph)
+        
+        output = "Kết quả kiểm tra điều kiện:\n\n"
+        
+        output += "Định lý Dirac:\n"
+        output += check1[1] + "\n\n"
+
+        output += "Định lý Ore:\n"
+        output += check2[1] + "\n\n"
+
+        if check1[0] or check2[0]:
+            output += "Kết luận: Đồ thị chắc chắn tồn tại chu trình Hamilton (vì thỏa ít nhất một định lý đủ)."
+        else:
+            output += "Kết luận: Không thỏa các định lý đủ Dirac hoặc Ore, nhưng chu trình Hamilton có thể vẫn tồn tại (cần chạy thuật toán để kiểm tra)."
+        
+        self.result_output.setPlainText(output)
+                
+        
 
     def run_algorithm(self):
         if not self.graph.vertices:
