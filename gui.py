@@ -1,5 +1,3 @@
-# Updated gui.py with modified run_connected_components function
-
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QComboBox, QTextEdit, QSizePolicy, QFileDialog, QMessageBox
 )
@@ -245,6 +243,7 @@ class GraphGUI(QWidget):
         self.hamilton_steps = []
         self.is_step_mode = False
         self.update_vertex_combo()
+        self.graph_area.clear_components()
 
     def on_draw_mode_changed(self, mode):
         self.graph_area.selected_vertices.clear()
@@ -263,6 +262,7 @@ class GraphGUI(QWidget):
         self.hamilton_steps = []
         self.is_step_mode = False
         self.update_vertex_combo()
+        self.graph_area.clear_components()
 
     def check_condition_graph(self):
         # vertices = [name for name, _ in self.graph.vertices]
@@ -372,6 +372,7 @@ class GraphGUI(QWidget):
                 self.hamilton_steps = []
                 self.is_step_mode = False
                 self.update_vertex_combo()
+                self.graph_area.clear_components()
                 QMessageBox.information(self, "Thành công", "Nhập đồ thị thành công!")
             except Exception as e:
                 QMessageBox.critical(self, "Lỗi", f"Không thể nhập file: {str(e)}")
@@ -476,6 +477,7 @@ class GraphGUI(QWidget):
         for i, comp in enumerate(component_list, 1):
             output += f"Miền {i}: {', '.join(comp)}\n"
         self.components.setPlainText(output)
+        self.graph_area.set_components(component_list)
     
     def run_export_image(self):
         file_path, _ = QFileDialog.getSaveFileName(

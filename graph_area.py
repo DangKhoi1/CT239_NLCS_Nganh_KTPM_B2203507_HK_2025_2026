@@ -1,8 +1,9 @@
 from math import hypot
 from copy import deepcopy
 from PyQt5.QtWidgets import QWidget, QInputDialog, QPushButton
-from PyQt5.QtCore import Qt, QRect, QPointF, QEvent
+from PyQt5.QtCore import Qt, QRect, QPointF
 from PyQt5.QtGui import QPainter, QBrush, QColor, QPen, QPainterPath
+import random  # Added for random color generation
 
 class GraphArea(QWidget):
     def __init__(self, graph, mode_getter, parent=None):
@@ -48,6 +49,10 @@ class GraphArea(QWidget):
         self.btn_stop.adjustSize()
         self.btn_stop.setVisible(False)
         self.btn_stop.setObjectName("btn_stop")
+
+        # Added for component coloring
+        self.component_colors = None
+        self.vertex_to_component = None
 
         # Nút kết nối
         self.btn_next_step.clicked.connect(self.show_next_step)
@@ -140,6 +145,24 @@ class GraphArea(QWidget):
                (edge_start == path_end and edge_end == path_start):
                 return True
         return False
+
+    # Added: Set random colors for connected components
+    def set_components(self, component_list):
+        self.component_colors = []
+        self.vertex_to_component = {}
+        for i, comp in enumerate(component_list):
+            # Generate random color for each component
+            color = QColor(random.randint(50, 200), random.randint(50, 200), random.randint(50, 200))
+            self.component_colors.append(color)
+            for v in comp:
+                self.vertex_to_component[v] = i
+        self.update()
+
+    # Added: Clear component coloring
+    def clear_components(self):
+        self.component_colors = None
+        self.vertex_to_component = None
+        self.update()
 
     def keyReleaseEvent(self, event):
         if event.key() == Qt.Key_Delete:
@@ -259,6 +282,14 @@ class GraphArea(QWidget):
             self.selection_end = pos
             self.update()
 
+        if mode == "Thêm đỉnh" and event.type() == event.MouseButtonDblClick:
+            name, ok = QInputDialog.getText(self, "Thêm đỉnh", "Nhập tên đỉnh:")
+            if ok and name:
+                self.push_undo()
+                self.graph.add_vertex((name, pos))
+                self.update()
+                self.parent().update_vertex_combo()
+
 
         if mode == "Thêm cạnh":
             for name, vpos in self.graph.vertices:
@@ -281,45 +312,26 @@ class GraphArea(QWidget):
                     self.update()
                     self.parent().update_vertex_combo()
                     return
-            for name1, name2 in self.graph.edges:
-                pos1 = next((v for n, v in self.graph.vertices if n == name1), None)
-                pos2 = next((v for n, v in self.graph.vertices if n == name2), None)
-                if not pos1 or not pos2:
-                    continue
-                if name1 == name2:
-                    control_point = QPointF(pos1.x(), pos1.y() - 40)
-                    if self.is_point_near_curve(pos, pos1, pos1, control_point, 15):
-                        self.push_undo()
-                        self.graph.remove_edge((name1, name2))
-                        self.selected_vertices.clear()
-                        self.update()
-                        return
-                else:
-                    control_point = self.graph.get_control_point((name1, name2))
-                    if control_point and self.is_point_near_curve(pos, pos1, pos2, control_point, 10):
-                        self.push_undo()
-                        self.graph.remove_edge((name1, name2))
-                        self.selected_vertices.clear()
-                        self.update()
-                        return
-                    elif not control_point and self.is_point_near_line(pos, pos1, pos2, 10):
-                        self.push_undo()
-                        self.graph.remove_edge((name1, name2))
-                        self.selected_vertices.clear()
-                        self.update()
-                        return
-
-
-    def mouseDoubleClickEvent(self, event):
-        if self.get_mode() == "Thêm đỉnh" and event.button() == Qt.LeftButton:
-            name, ok = QInputDialog.getText(self, "Thêm đỉnh", "Tên đỉnh:")
-            if ok and name:
-                self.push_undo()
-                self.graph.add_vertex((name, event.pos()))
-                self.update()
-        else:
-            super().mouseDoubleClickEvent(event)
-
+            # Xóa cạnh nếu click vào cạnh
+            for edge in self.graph.edges:
+                name1, name2 = edge
+                pos1 = next((p for n, p in self.graph.vertices if n == name1), None)
+                pos2 = next((p for n, p in self.graph.vertices if n == name2), None)
+                if pos1 and pos2:
+                    control_point = self.graph.get_control_point(edge)
+                    if control_point:
+                        if self.is_point_near_curve(pos, pos1, pos2, control_point, 10):
+                            self.push_undo()
+                            self.graph.remove_edge(edge)
+                            self.update()
+                            return
+                    else:
+                        if self.is_point_near_line(pos, pos1, pos2, 10):
+                            self.push_undo()
+                            self.graph.remove_edge(edge)
+                            self.update()
+                            return
+                        
     def mouseMoveEvent(self, event):
         if not (event.buttons() & Qt.LeftButton):
             return
@@ -501,6 +513,7 @@ class GraphArea(QWidget):
         painter.setRenderHint(QPainter.Antialiasing)
         painter.fillRect(self.rect(), Qt.white)
 
+        # Draw edges with component colors if available
         for start, end in self.graph.edges:
             pos1 = next((p for n, p in self.graph.vertices if n == start), None)
             pos2 = next((p for n, p in self.graph.vertices if n == end), None)
@@ -511,6 +524,10 @@ class GraphArea(QWidget):
                 painter.setPen(QPen(QColor("green"), 5))
             elif (start, end) in self.area_selected_edges or (end, start) in self.area_selected_edges:
                 painter.setPen(QPen(QColor("deepskyblue"), 3))
+            elif self.component_colors and start in self.vertex_to_component and end in self.vertex_to_component:
+                comp_id = self.vertex_to_component[start]  # Same component for connected edge
+                color = self.component_colors[comp_id]
+                painter.setPen(QPen(color, 2))
             else:
                 painter.setPen(QPen(Qt.black, 2))
             if start == end:
@@ -527,6 +544,7 @@ class GraphArea(QWidget):
                 else:
                     painter.drawLine(pos1, pos2)
 
+        # Draw vertices with component colors if available
         highlight = self.selected_vertices if self.get_mode() == "Thêm cạnh" else []
         for name, pos in self.graph.vertices:
             if name in highlight:
@@ -538,6 +556,11 @@ class GraphArea(QWidget):
             elif self.hamilton_path and name in self.hamilton_path:
                 pen = QPen(QColor("green"), 4)
                 brush = QBrush(QColor("lightgreen"))
+            elif self.component_colors and name in self.vertex_to_component:
+                comp_id = self.vertex_to_component[name]
+                color = self.component_colors[comp_id]
+                pen = QPen(color.darker(150), 2)  # Darker border for visibility
+                brush = QBrush(color.lighter(150))  # Lighter fill for vertices
             else:
                 pen = QPen(Qt.black, 2)
                 brush = QBrush(Qt.white)
