@@ -3,7 +3,7 @@ from copy import deepcopy
 from PyQt5.QtWidgets import QWidget, QInputDialog, QPushButton
 from PyQt5.QtCore import Qt, QRect, QPointF
 from PyQt5.QtGui import QPainter, QBrush, QColor, QPen, QPainterPath
-import random  # Added for random color generation
+import random  
 
 class GraphArea(QWidget):
     def __init__(self, graph, mode_getter, parent=None):

@@ -160,6 +160,8 @@ class GraphGUI(QWidget):
         
         control_panel.addStretch()
 
+
+    #Kết nối logic xử lý
         self.btn_random.clicked.connect(self.generate_random_graph)
         self.btn_clear.clicked.connect(self.clear_graph)
         self.btn_execute.clicked.connect(self.run_algorithm)
