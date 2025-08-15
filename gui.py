@@ -5,7 +5,7 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
 from graph_area import GraphArea
 from graph import Graph
-from graph import generate_random_graph, export_file, import_file, format_graph_circular, format_graph_grid, format_graph_spring, format_graph_hierarchical
+from graph import generate_random_graph, export_file, import_file, format_graph_circular
 from graph_algorithms import hamiltonian_cycle_with_steps, hamiltonian_cycle_branch_and_bound, hamiltonian_cycle_brute_force, connected_components, check_dirac_condition, check_ore_condition
 from PyQt5.QtGui import QIcon
 import pathlib
@@ -205,21 +205,21 @@ class GraphGUI(QWidget):
         self.graph_area.push_undo()
         width = self.graph_area.width()
         height = self.graph_area.height()
-        num_vertices = len(self.graph.vertices)
-        num_edges = len(self.graph.edges)
-        if num_vertices <= 8 and num_edges >= num_vertices - 1:
-            format_graph_circular(self.graph, width, height)
-            layout_name = "Hình tròn"
-        elif num_edges < num_vertices * 0.3:
-            if self.is_tree_like():
-                format_graph_hierarchical(self.graph, width, height)
-                layout_name = "Phân cấp"
-            else:
-                format_graph_grid(self.graph, width, height)
-                layout_name = "Lưới"
-        else:
-            format_graph_spring(self.graph, width, height)
-            layout_name = "Spring (Tự động)"
+        # num_vertices = len(self.graph.vertices)
+        # num_edges = len(self.graph.edges)
+        # if num_vertices <= 8 and num_edges >= num_vertices - 1:
+        format_graph_circular(self.graph, width, height)
+        layout_name = "Hình tròn"
+        # elif num_edges < num_vertices * 0.3:
+        #     if self.is_tree_like():
+        #         format_graph_hierarchical(self.graph, width, height)
+        #         layout_name = "Phân cấp"
+        #     else:
+        #         format_graph_grid(self.graph, width, height)
+        #         layout_name = "Lưới"
+        # else:
+        #     format_graph_spring(self.graph, width, height)
+        #     layout_name = "Spring (Tự động)"
         self.graph_area.update()
         self.update_vertex_combo()
         QMessageBox.information(self, "Thành công", f"Đã format đồ thị theo kiểu {layout_name}.")

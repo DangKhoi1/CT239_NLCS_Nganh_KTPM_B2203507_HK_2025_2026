@@ -280,9 +280,6 @@ QToolTip {
   border-radius: 6px;
 }
 
-/* =====================
-   StatusBar / Progress (nếu có)
-   ===================== */
 QStatusBar {
   background: #f8fafc;
   border-top: 1px solid #e2e8f0;
