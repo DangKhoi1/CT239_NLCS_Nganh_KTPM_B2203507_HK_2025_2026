@@ -50,7 +50,7 @@ class GraphArea(QWidget):
         self.btn_stop.setVisible(False)
         self.btn_stop.setObjectName("btn_stop")
 
-        # Added for component coloring
+        # Thêm màu cho liên thông
         self.component_colors = None
         self.vertex_to_component = None
 
@@ -146,19 +146,19 @@ class GraphArea(QWidget):
                 return True
         return False
 
-    # Added: Set random colors for connected components
+    #Thiết lập màu cho các thành phần liên thông
     def set_components(self, component_list):
         self.component_colors = []
         self.vertex_to_component = {}
         for i, comp in enumerate(component_list):
-            # Generate random color for each component
+            # tạo màu ngẫu nhiên cho mỗi thành phần
             color = QColor(random.randint(50, 200), random.randint(50, 200), random.randint(50, 200))
             self.component_colors.append(color)
             for v in comp:
                 self.vertex_to_component[v] = i
         self.update()
 
-    # Added: Clear component coloring
+    #Xóa màu của các thành phần liên thông
     def clear_components(self):
         self.component_colors = None
         self.vertex_to_component = None
@@ -349,7 +349,7 @@ class GraphArea(QWidget):
             dy = event.pos().y() - self.last_mouse_pos.y()
             for i, (name, pos) in enumerate(self.graph.vertices):
                 if name in self.area_selected_vertices:
-                    self.graph.vertices[i] = (name, QPointF(pos.x() + dx, pos.y() + dy))
+                    self.graph.vertices[i] = (name, QPointF(pos.x() +   dx, pos.y() + dy))
             self.update_all_related_control_points()
             self.last_mouse_pos = event.pos()
             updated = True
@@ -383,37 +383,37 @@ class GraphArea(QWidget):
             if vertex_name in edge:
                 self.update_control_point_for_edge(edge)
 
-    def update_control_point_for_edge(self, edge):
-        name1, name2 = edge
-        pos1 = next((p for n, p in self.graph.vertices if n == name1), None)
-        pos2 = next((p for n, p in self.graph.vertices if n == name2), None)
-        if not pos1 or not pos2 or (pos1 == pos2):
-            return
-        control_point = self.graph.get_control_point(edge)
-        if not control_point:
-            return
+        def update_control_point_for_edge(self, edge):
+            name1, name2 = edge
+            pos1 = next((p for n, p in self.graph.vertices if n == name1), None)
+            pos2 = next((p for n, p in self.graph.vertices if n == name2), None)
+            if not pos1 or not pos2 or (pos1 == pos2):
+                return
+            control_point = self.graph.get_control_point(edge)
+            if not control_point:
+                return
 
-        # Vector từ pos1 đến pos2
-        edge_vec = pos2 - pos1
-        if edge_vec.x() == 0 and edge_vec.y() == 0:
-            return
+            # Vector từ pos1 đến pos2
+            edge_vec = pos2 - pos1
+            if edge_vec.x() == 0 and edge_vec.y() == 0:
+                return
 
-        # Vector vuông góc đơn vị
-        perp = QPointF(-edge_vec.y(), edge_vec.x())
-        length = (perp.x() ** 2 + perp.y() ** 2) ** 0.5
-        if length == 0:
-            return
-        perp /= length
+            # Vector vuông góc đơn vị
+            perp = QPointF(-edge_vec.y(), edge_vec.x())
+            length = (perp.x() ** 2 + perp.y() ** 2) ** 0.5
+            if length == 0:
+                return
+            perp /= length
 
-        # Trung điểm cạnh
-        mid = (pos1 + pos2) * 0.5
+            # Trung điểm cạnh
+            mid = (pos1 + pos2) * 0.5
 
-        # Khoảng cách từ control_point đến đường thẳng, theo hướng vuông góc
-        dist = (control_point - mid).x() * perp.x() + (control_point - mid).y() * perp.y()
+            # Khoảng cách từ control_point đến đường thẳng, theo hướng vuông góc
+            dist = (control_point - mid).x() * perp.x() + (control_point - mid).y() * perp.y()
 
-        # Đặt lại control_point theo khoảng cách này
-        new_cp = mid + perp * dist
-        self.graph.set_control_point(edge, new_cp)
+            # Đặt lại control_point theo khoảng cách này
+            new_cp = mid + perp * dist
+            self.graph.set_control_point(edge, new_cp)
 
     def mouseReleaseEvent(self, event):
         self.selected_vertex_idx = None
