@@ -142,6 +142,57 @@ def format_graph_circular(graph, width=600, height=500):
     for edge in graph.edges:
         graph.create_default_control_point(edge)
 
+def export_file(graph, file_path):
+    if not file_path:
+        return
+
+    data = {
+        "vertices": [
+            {"name": name, "x": pos.x(), "y": pos.y()}
+            for name, pos in graph.vertices
+        ],
+        "edges": [
+            [v1, v2] for v1, v2 in graph.edges
+        ],
+        "control_points": {
+            f"{edge[0]}-{edge[1]}": {"x": point.x(), "y": point.y()}
+            for edge, point in graph.edge_control_points.items()
+        }
+    }
+
+    with open(file_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
+
+
+def import_file(graph, file_path):
+    if not file_path:
+        return
+
+    with open(file_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    graph.clear()
+    
+    for v in data.get("vertices", []):
+        name = v["name"]
+        pos = QPoint(v["x"], v["y"])
+        graph.add_vertex((name, pos))
+    
+    for edge in data.get("edges", []):
+        if len(edge) == 2:
+            graph.add_edge(tuple(edge))
+    
+    # Import điểm điều khiển
+    control_points = data.get("control_points", {})
+    for edge_key, point_data in control_points.items():
+        if "-" in edge_key:
+            parts = edge_key.split("-")
+            if len(parts) == 2:
+                edge = (parts[0], parts[1])
+                control_point = QPointF(point_data["x"], point_data["y"])
+                graph.set_control_point(edge, control_point)
+
+
 
 # def format_graph_grid(graph, width=600, height=500):
 #     """Sắp xếp đồ thị theo lưới"""
@@ -308,55 +359,3 @@ def format_graph_circular(graph, width=600, height=500):
 #     # Reset control points for all edges
 #     for edge in graph.edges:
 #         graph.create_default_control_point(edge)
-
-
-def export_file(graph, file_path):
-    if not file_path:
-        return
-
-    data = {
-        "vertices": [
-            {"name": name, "x": pos.x(), "y": pos.y()}
-            for name, pos in graph.vertices
-        ],
-        "edges": [
-            [v1, v2] for v1, v2 in graph.edges
-        ],
-        "control_points": {
-            f"{edge[0]}-{edge[1]}": {"x": point.x(), "y": point.y()}
-            for edge, point in graph.edge_control_points.items()
-        }
-    }
-
-    with open(file_path, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
-
-
-def import_file(graph, file_path):
-    if not file_path:
-        return
-
-    with open(file_path, "r", encoding="utf-8") as f:
-        data = json.load(f)
-
-    graph.clear()
-    
-    for v in data.get("vertices", []):
-        name = v["name"]
-        pos = QPoint(v["x"], v["y"])
-        graph.add_vertex((name, pos))
-    
-    for edge in data.get("edges", []):
-        if len(edge) == 2:
-            graph.add_edge(tuple(edge))
-    
-    # Import điểm điều khiển
-    control_points = data.get("control_points", {})
-    for edge_key, point_data in control_points.items():
-        if "-" in edge_key:
-            parts = edge_key.split("-")
-            if len(parts) == 2:
-                edge = (parts[0], parts[1])
-                control_point = QPointF(point_data["x"], point_data["y"])
-                graph.set_control_point(edge, control_point)
-
