@@ -95,8 +95,9 @@ def connected_components(graph):
         if v not in visited:
             component = []
             dfs(v, component)
-            components.append(sorted(component))  # Sắp xếp để dễ đọc
-
+            # components.append(sorted(component))  # Sắp xếp để dễ đọc
+            components.append(component)
+            
     return len(components), components
 
 

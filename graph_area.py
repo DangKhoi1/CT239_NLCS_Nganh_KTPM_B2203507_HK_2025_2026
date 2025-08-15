@@ -129,7 +129,14 @@ class GraphArea(QWidget):
         self.parent().exit_step_mode()
 
     def stop_algorithm(self):
-        """Dừng giải thuật"""
+        """Dừng chế độ hiện tại: tô màu liên thông hoặc thuật toán Hamilton"""
+        if self.component_colors is not None:
+            self.clear_components()
+            self.btn_stop.setVisible(False)
+            self.parent().components.setPlainText("Dừng kiểm tra miền liên thông.")
+            return
+        
+        # Code gốc cho Hamilton
         self.clear_hamilton_visualization()
         self.parent().result_output.setPlainText("Đã dừng thuật toán.")
 
@@ -383,37 +390,37 @@ class GraphArea(QWidget):
             if vertex_name in edge:
                 self.update_control_point_for_edge(edge)
 
-        def update_control_point_for_edge(self, edge):
-            name1, name2 = edge
-            pos1 = next((p for n, p in self.graph.vertices if n == name1), None)
-            pos2 = next((p for n, p in self.graph.vertices if n == name2), None)
-            if not pos1 or not pos2 or (pos1 == pos2):
-                return
-            control_point = self.graph.get_control_point(edge)
-            if not control_point:
-                return
+    def update_control_point_for_edge(self, edge):
+        name1, name2 = edge
+        pos1 = next((p for n, p in self.graph.vertices if n == name1), None)
+        pos2 = next((p for n, p in self.graph.vertices if n == name2), None)
+        if not pos1 or not pos2 or (pos1 == pos2):
+            return
+        control_point = self.graph.get_control_point(edge)
+        if not control_point:
+            return
 
-            # Vector từ pos1 đến pos2
-            edge_vec = pos2 - pos1
-            if edge_vec.x() == 0 and edge_vec.y() == 0:
-                return
+        # Vector từ pos1 đến pos2
+        edge_vec = pos2 - pos1
+        if edge_vec.x() == 0 and edge_vec.y() == 0:
+            return
 
-            # Vector vuông góc đơn vị
-            perp = QPointF(-edge_vec.y(), edge_vec.x())
-            length = (perp.x() ** 2 + perp.y() ** 2) ** 0.5
-            if length == 0:
-                return
-            perp /= length
+        # Vector vuông góc đơn vị
+        perp = QPointF(-edge_vec.y(), edge_vec.x())
+        length = (perp.x() ** 2 + perp.y() ** 2) ** 0.5
+        if length == 0:
+            return
+        perp /= length
 
-            # Trung điểm cạnh
-            mid = (pos1 + pos2) * 0.5
+        # Trung điểm cạnh
+        mid = (pos1 + pos2) * 0.5
 
-            # Khoảng cách từ control_point đến đường thẳng, theo hướng vuông góc
-            dist = (control_point - mid).x() * perp.x() + (control_point - mid).y() * perp.y()
+        # Khoảng cách từ control_point đến đường thẳng, theo hướng vuông góc
+        dist = (control_point - mid).x() * perp.x() + (control_point - mid).y() * perp.y()
 
-            # Đặt lại control_point theo khoảng cách này
-            new_cp = mid + perp * dist
-            self.graph.set_control_point(edge, new_cp)
+        # Đặt lại control_point theo khoảng cách này
+        new_cp = mid + perp * dist
+        self.graph.set_control_point(edge, new_cp)
 
     def mouseReleaseEvent(self, event):
         self.selected_vertex_idx = None
@@ -490,7 +497,7 @@ class GraphArea(QWidget):
         projection = a + ab * t
         dx = projection.x() - p.x()
         dy = projection.y() - p.y()
-        return hypot(dx, dy) <= tolerance
+        return hypot(dx, dy) <= tolerance # Tương đương sqrt(dx**2 + dy**2)
 
     def is_point_near_curve(self, point, start, end, control, tolerance=10):
         for t in [i/20.0 for i in range(21)]:
@@ -513,7 +520,7 @@ class GraphArea(QWidget):
         painter.setRenderHint(QPainter.Antialiasing)
         painter.fillRect(self.rect(), Qt.white)
 
-        # Draw edges with component colors if available
+        # vẽ các cạnh với màu sắc khác nhau cho thành phần liên thông nếu hợp lệ
         for start, end in self.graph.edges:
             pos1 = next((p for n, p in self.graph.vertices if n == start), None)
             pos2 = next((p for n, p in self.graph.vertices if n == end), None)
@@ -525,7 +532,7 @@ class GraphArea(QWidget):
             elif (start, end) in self.area_selected_edges or (end, start) in self.area_selected_edges:
                 painter.setPen(QPen(QColor("deepskyblue"), 3))
             elif self.component_colors and start in self.vertex_to_component and end in self.vertex_to_component:
-                comp_id = self.vertex_to_component[start]  # Same component for connected edge
+                comp_id = self.vertex_to_component[start] 
                 color = self.component_colors[comp_id]
                 painter.setPen(QPen(color, 2))
             else:

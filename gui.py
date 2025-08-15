@@ -478,6 +478,7 @@ class GraphGUI(QWidget):
             output += f"Miền {i}: {', '.join(comp)}\n"
         self.components.setPlainText(output)
         self.graph_area.set_components(component_list)
+        self.graph_area.btn_stop.setVisible(True) 
     
     def run_export_image(self):
         file_path, _ = QFileDialog.getSaveFileName(
