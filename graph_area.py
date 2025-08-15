@@ -1,7 +1,7 @@
 from math import hypot
 from copy import deepcopy
 from PyQt5.QtWidgets import QWidget, QInputDialog, QPushButton
-from PyQt5.QtCore import Qt, QRect, QPointF
+from PyQt5.QtCore import Qt, QRect, QPointF, QEvent
 from PyQt5.QtGui import QPainter, QBrush, QColor, QPen, QPainterPath
 
 class GraphArea(QWidget):
@@ -18,17 +18,20 @@ class GraphArea(QWidget):
         self.area_selected_vertices = []
         self.area_selected_edges = []
         self.last_mouse_pos = None
+
         self.undo_stack = []
         self.redo_stack = []
+
         self.selected_control_point = None
         self.dragging_control_point = False
         self.control_point_radius = 6
+
         self.hamilton_path = None
         self.dragging_area_selection = False
         self.current_step_index = -1
         self.hamilton_steps = []
         
-        # Initialize step-by-step buttons
+        # các nút điều khiển giải thuật
         self.btn_next_step = QPushButton("Bước tiếp", self)
         self.btn_next_step.adjustSize()
         self.btn_next_step.setVisible(False)
@@ -40,28 +43,28 @@ class GraphArea(QWidget):
         self.btn_exit_step_mode.setVisible(False)
         self.btn_exit_step_mode.setObjectName("btn_exit_step_mode")
 
-        # Initialize stop button
+        # Nút dừng giải thuật
         self.btn_stop = QPushButton("Dừng", self)
         self.btn_stop.adjustSize()
         self.btn_stop.setVisible(False)
         self.btn_stop.setObjectName("btn_stop")
 
-        # Connect buttons
+        # Nút kết nối
         self.btn_next_step.clicked.connect(self.show_next_step)
         self.btn_prev_step.clicked.connect(self.show_prev_step)
         self.btn_exit_step_mode.clicked.connect(self.exit_step_mode)
         self.btn_stop.clicked.connect(self.stop_algorithm)
 
     def resizeEvent(self, event):
-        """Position buttons in the graph area"""
+        """Vị trí các nút trên vùng vẽ"""
         super().resizeEvent(event)
         self.btn_next_step.move(self.width() - 110, self.height() - 60)
         self.btn_prev_step.move(self.width() - 220, self.height() - 60)
         self.btn_exit_step_mode.move(self.width() - 80, self.height() - 500)
-        self.btn_stop.move(self.width() - 80, 10)  # Top-right corner
+        self.btn_stop.move(self.width() - 80, 10) 
 
     def clear_hamilton_visualization(self):
-        """Clear all Hamiltonian visualization data"""
+        """Xóa tất cả thông tin về đường đi Hamilton"""
         self.hamilton_path = None
         self.current_step_index = -1
         self.hamilton_steps = []
@@ -72,25 +75,25 @@ class GraphArea(QWidget):
         self.update()
 
     def set_hamilton_visualization(self, path):
-        """Set the Hamiltonian cycle path for visualization."""
+        """Cài đặt đường đi Hamilton"""
         self.hamilton_path = path
         self.current_step_index = -1
         self.hamilton_steps = []
         self.btn_next_step.setVisible(False)
         self.btn_prev_step.setVisible(False)
         self.btn_exit_step_mode.setVisible(False)
-        self.btn_stop.setVisible(True)  # Show stop button when algorithm is running
+        self.btn_stop.setVisible(True)
         self.update()
 
     def set_hamilton_steps(self, steps):
-        """Set the steps for Hamiltonian cycle visualization."""
+        """Các bước trực quan của giải thuật Hamilton"""
         self.hamilton_steps = steps
         self.current_step_index = -1
         if steps:
             self.btn_next_step.setVisible(True)
             self.btn_prev_step.setVisible(True)
             self.btn_exit_step_mode.setVisible(True)
-            self.btn_stop.setVisible(False)  # Hide stop button in step mode
+            self.btn_stop.setVisible(False)
             self.show_next_step()
         else:
             self.btn_next_step.setVisible(False)
@@ -100,7 +103,7 @@ class GraphArea(QWidget):
         self.update()
 
     def show_next_step(self):
-        """Display the next step of the algorithm"""
+        """Hiển thị bước kế tiếp của giải thuật"""
         if self.current_step_index < len(self.hamilton_steps) - 1:
             self.current_step_index += 1
             self.hamilton_path = self.hamilton_steps[self.current_step_index]['path']
@@ -108,7 +111,7 @@ class GraphArea(QWidget):
             self.parent().update_step_display(self.current_step_index)
 
     def show_prev_step(self):
-        """Display the previous step of the algorithm"""
+        """Hiển thị bước quay lại của giải thuật"""
         if self.current_step_index > 0:
             self.current_step_index -= 1
             self.hamilton_path = self.hamilton_steps[self.current_step_index]['path']
@@ -116,17 +119,17 @@ class GraphArea(QWidget):
             self.parent().update_step_display(self.current_step_index)
 
     def exit_step_mode(self):
-        """Exit step-by-step mode"""
+        """Thoát chế độ từng bước"""
         self.clear_hamilton_visualization()
         self.parent().exit_step_mode()
 
     def stop_algorithm(self):
-        """Stop the current algorithm visualization"""
+        """Dừng giải thuật"""
         self.clear_hamilton_visualization()
         self.parent().result_output.setPlainText("Đã dừng thuật toán.")
 
     def is_edge_in_hamilton_path(self, edge_start, edge_end):
-        """Check if an edge is in the Hamiltonian path"""
+        """Kiểm tra xem cạnh có nằm trong đường đi Hamilton hay không"""
         if not self.hamilton_path or len(self.hamilton_path) < 2:
             return False
         
@@ -164,7 +167,7 @@ class GraphArea(QWidget):
         )
         self.undo_stack.append(state)
         self.redo_stack.clear()
-
+    
     def undo(self):
         if self.undo_stack:
             current_state = (
@@ -256,13 +259,6 @@ class GraphArea(QWidget):
             self.selection_end = pos
             self.update()
 
-        if mode == "Thêm đỉnh" and event.type() == event.MouseButtonDblClick:
-            name, ok = QInputDialog.getText(self, "Thêm đỉnh", "Nhập tên đỉnh:")
-            if ok and name:
-                self.push_undo()
-                self.graph.add_vertex((name, pos))
-                self.update()
-                self.parent().update_vertex_combo()
 
         if mode == "Thêm cạnh":
             for name, vpos in self.graph.vertices:
@@ -313,40 +309,53 @@ class GraphArea(QWidget):
                         self.update()
                         return
 
+
+    def mouseDoubleClickEvent(self, event):
+        if self.get_mode() == "Thêm đỉnh" and event.button() == Qt.LeftButton:
+            name, ok = QInputDialog.getText(self, "Thêm đỉnh", "Tên đỉnh:")
+            if ok and name:
+                self.push_undo()
+                self.graph.add_vertex((name, event.pos()))
+                self.update()
+        else:
+            super().mouseDoubleClickEvent(event)
+
     def mouseMoveEvent(self, event):
-        if not event.buttons() & Qt.LeftButton:
+        if not (event.buttons() & Qt.LeftButton):
             return
 
+        updated = False
+
+        # Kéo control point để chỉnh cong cạnh
         if self.dragging_control_point and self.selected_control_point:
             self.graph.set_control_point(self.selected_control_point, event.pos())
-            self.update()
-            return
+            updated = True
 
-        if self.dragging_area_selection and self.area_selected_vertices:
-            if self.last_mouse_pos:
-                dx = event.pos().x() - self.last_mouse_pos.x()
-                dy = event.pos().y() - self.last_mouse_pos.y()
-                for i, (name, pos) in enumerate(self.graph.vertices):
-                    if name in self.area_selected_vertices:
-                        new_pos = QPointF(pos.x() + dx, pos.y() + dy)
-                        self.graph.vertices[i] = (name, new_pos)
-                self.update_all_related_control_points()
-                self.update()
+        # Kéo nhóm đỉnh đã chọn (area selection)
+        elif self.dragging_area_selection and self.area_selected_vertices and self.last_mouse_pos:
+            dx = event.pos().x() - self.last_mouse_pos.x()
+            dy = event.pos().y() - self.last_mouse_pos.y()
+            for i, (name, pos) in enumerate(self.graph.vertices):
+                if name in self.area_selected_vertices:
+                    self.graph.vertices[i] = (name, QPointF(pos.x() + dx, pos.y() + dy))
+            self.update_all_related_control_points()
             self.last_mouse_pos = event.pos()
-            return
+            updated = True
 
-        if self.selected_vertex_idx is not None:
-            if 0 <= self.selected_vertex_idx < len(self.graph.vertices):
-                name, _ = self.graph.vertices[self.selected_vertex_idx]
-                self.graph.vertices[self.selected_vertex_idx] = (name, event.pos())
-                self.update_related_control_points(name)
-                self.update()
-            return
+        # Kéo một đỉnh đơn lẻ
+        elif self.selected_vertex_idx is not None and 0 <= self.selected_vertex_idx < len(self.graph.vertices):
+            name, _ = self.graph.vertices[self.selected_vertex_idx]
+            self.graph.vertices[self.selected_vertex_idx] = (name, event.pos())
+            self.update_related_control_points(name)
+            updated = True
 
-        if self.selecting_area:
+        # Vẽ vùng chọn (chuột kéo để chọn nhiều đỉnh/cạnh)
+        elif self.selecting_area:
             self.selection_end = event.pos()
+            updated = True
+
+        if updated:
             self.update()
-            return
 
     def update_all_related_control_points(self):
         for edge in list(self.graph.edge_control_points.keys()):
@@ -366,26 +375,33 @@ class GraphArea(QWidget):
         name1, name2 = edge
         pos1 = next((p for n, p in self.graph.vertices if n == name1), None)
         pos2 = next((p for n, p in self.graph.vertices if n == name2), None)
-        if not pos1 or not pos2:
+        if not pos1 or not pos2 or (pos1 == pos2):
             return
         control_point = self.graph.get_control_point(edge)
         if not control_point:
             return
-        edge_vector = QPointF(pos2.x() - pos1.x(), pos2.y() - pos1.y())
-        perpendicular = QPointF(-edge_vector.y(), edge_vector.x())
-        mid_point = QPointF((pos1.x() + pos2.x()) / 2, (pos1.y() + pos2.y()) / 2)
-        if edge_vector.x() == 0 and edge_vector.y() == 0:
+
+        # Vector từ pos1 đến pos2
+        edge_vec = pos2 - pos1
+        if edge_vec.x() == 0 and edge_vec.y() == 0:
             return
-        perp_length = (perpendicular.x() ** 2 + perpendicular.y() ** 2) ** 0.5
-        if perp_length > 0:
-            perpendicular = QPointF(perpendicular.x() / perp_length, perpendicular.y() / perp_length)
-        cp_to_mid = QPointF(control_point.x() - mid_point.x(), control_point.y() - mid_point.y())
-        distance = cp_to_mid.x() * perpendicular.x() + cp_to_mid.y() * perpendicular.y()
-        new_control_point = QPointF(
-            mid_point.x() + distance * perpendicular.x(),
-            mid_point.y() + distance * perpendicular.y()
-        )
-        self.graph.set_control_point(edge, new_control_point)
+
+        # Vector vuông góc đơn vị
+        perp = QPointF(-edge_vec.y(), edge_vec.x())
+        length = (perp.x() ** 2 + perp.y() ** 2) ** 0.5
+        if length == 0:
+            return
+        perp /= length
+
+        # Trung điểm cạnh
+        mid = (pos1 + pos2) * 0.5
+
+        # Khoảng cách từ control_point đến đường thẳng, theo hướng vuông góc
+        dist = (control_point - mid).x() * perp.x() + (control_point - mid).y() * perp.y()
+
+        # Đặt lại control_point theo khoảng cách này
+        new_cp = mid + perp * dist
+        self.graph.set_control_point(edge, new_cp)
 
     def mouseReleaseEvent(self, event):
         self.selected_vertex_idx = None
@@ -550,6 +566,6 @@ class GraphArea(QWidget):
         if self.dragging_control_point and self.selected_control_point:
             control_point = self.graph.get_control_point(self.selected_control_point)
             # if control_point:
-            #     painter.setPen(QPen(Qt.red, 2))
-            #     painter.setBrush(QBrush(Qt.red))
-            #     painter.drawEllipse(control_point, self.control_point_radius, self.control_point_radius)
+                # painter.setPen(QPen(Qt.red, 2))
+                # painter.setBrush(QBrush(Qt.red))
+                # painter.drawEllipse(control_point, self.control_point_radius, self.control_point_radius)

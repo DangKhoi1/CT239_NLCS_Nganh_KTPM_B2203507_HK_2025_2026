@@ -74,6 +74,31 @@ class Graph:
         self.edges.clear()
         self.edge_control_points.clear()
 
+def connected_components(graph):
+    vertices = [v[0] for v in graph.vertices]
+    adjacency = {v: set() for v in vertices}
+    for u, v in graph.edges:
+        adjacency[u].add(v)
+        adjacency[v].add(u)
+
+    visited = set()
+    components = []
+
+    def dfs(u, component):
+        visited.add(u)
+        component.append(u)
+        for v in adjacency[u]:
+            if v not in visited:
+                dfs(v, component)
+
+    for v in vertices:
+        if v not in visited:
+            component = []
+            dfs(v, component)
+            components.append(sorted(component))  # Sắp xếp để dễ đọc
+
+    return len(components), components
+
 
 def generate_random_graph(graph, num_vertices=None, edge_probability=0.4, width=600, height=500):
     if num_vertices is None:

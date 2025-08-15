@@ -1,5 +1,6 @@
 from collections import deque
 import itertools
+from graph import connected_components
 
 def check_dirac_condition(graph):
     """Kiểm tra điều kiện đủ cho chu trình Hamilton dựa trên định lý Dirac"""
@@ -413,7 +414,7 @@ def hamiltonian_cycle_branch_and_bound(graph, start_vertex=None):
                 steps.append({
                     'step': step_count,
                     'path': path.copy(),
-                    'action': f"Thêm đỉnh {v} vào đường đi (hứa hẹn): {' → '.join(path)}"
+                    'action': f"Thêm đỉnh {v} vào đường đi: {' → '.join(path)}"
                 })
                 
                 if branch_and_bound(pos + 1):
@@ -621,27 +622,3 @@ def hamiltonian_cycle_brute_force(graph, start_vertex=None):
         'total_steps': step_count
     }
 
-def connected_components(graph):
-    vertices = [v[0] for v in graph.vertices]
-    adjacency = {v: set() for v in vertices}
-    for u, v in graph.edges:
-        adjacency[u].add(v)
-        adjacency[v].add(u)
-
-    visited = set()
-    components = []
-
-    def dfs(u, component):
-        visited.add(u)
-        component.append(u)
-        for v in adjacency[u]:
-            if v not in visited:
-                dfs(v, component)
-
-    for v in vertices:
-        if v not in visited:
-            component = []
-            dfs(v, component)
-            components.append(sorted(component))  # Sắp xếp để dễ đọc
-
-    return len(components), components

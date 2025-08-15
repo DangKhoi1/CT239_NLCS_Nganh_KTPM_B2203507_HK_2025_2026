@@ -342,7 +342,7 @@ class GraphGUI(QWidget):
                 self.result_output.setPlainText(output)
 
     def update_step_display(self, step_index):
-        """Update result text based on the current step"""
+        """Cập nhật kết quả dựa trên bước đi hiện tại"""
         if not self.hamilton_steps or step_index < 0 or step_index >= len(self.hamilton_steps):
             self.result_output.setPlainText("")
             return
