@@ -207,31 +207,11 @@ class GraphGUI(QWidget):
         self.graph_area.push_undo()
         width = self.graph_area.width()
         height = self.graph_area.height()
-        # num_vertices = len(self.graph.vertices)
-        # num_edges = len(self.graph.edges)
-        # if num_vertices <= 8 and num_edges >= num_vertices - 1:
         format_graph_circular(self.graph, width, height)
         layout_name = "Hình tròn"
-        # elif num_edges < num_vertices * 0.3:
-        #     if self.is_tree_like():
-        #         format_graph_hierarchical(self.graph, width, height)
-        #         layout_name = "Phân cấp"
-        #     else:
-        #         format_graph_grid(self.graph, width, height)
-        #         layout_name = "Lưới"
-        # else:
-        #     format_graph_spring(self.graph, width, height)
-        #     layout_name = "Spring (Tự động)"
         self.graph_area.update()
         self.update_vertex_combo()
         QMessageBox.information(self, "Thành công", f"Đã format đồ thị theo kiểu {layout_name}.")
-
-    # def is_tree_like(self):
-    #     num_vertices = len(self.graph.vertices)
-    #     num_edges = len(self.graph.edges)
-    #     if num_edges == num_vertices - 1:
-    #         return connected_components(self.graph)[0] == 1
-    #     return False
 
     def generate_random_graph(self):
         self.graph_area.push_undo()
@@ -267,15 +247,6 @@ class GraphGUI(QWidget):
         self.graph_area.clear_components()
 
     def check_condition_graph(self):
-        # vertices = [name for name, _ in self.graph.vertices]
-        # adjacency = {v: set() for v in vertices}
-        # for e in self.graph.edges:
-        #     if len(e) >= 2:
-        #         u, v = e[0], e[1]
-        #         if u in adjacency and v in adjacency:
-        #             adjacency[u].add(v)
-        #             adjacency[v].add(u)
-        # isolated_vertices = [v for v in vertices if len(adjacency[v]) == 0]
         
         if connected_components(self.graph)[0] > 1:
             self.result_output.setPlainText( 
