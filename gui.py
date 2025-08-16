@@ -226,12 +226,12 @@ class GraphGUI(QWidget):
         self.update_vertex_combo()
         QMessageBox.information(self, "Thành công", f"Đã format đồ thị theo kiểu {layout_name}.")
 
-    def is_tree_like(self):
-        num_vertices = len(self.graph.vertices)
-        num_edges = len(self.graph.edges)
-        if num_edges == num_vertices - 1:
-            return connected_components(self.graph)[0] == 1
-        return False
+    # def is_tree_like(self):
+    #     num_vertices = len(self.graph.vertices)
+    #     num_edges = len(self.graph.edges)
+    #     if num_edges == num_vertices - 1:
+    #         return connected_components(self.graph)[0] == 1
+    #     return False
 
     def generate_random_graph(self):
         self.graph_area.push_undo()
